@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "639549190722",
+    "firebase_url": "https://panic-link-default-rtdb.firebaseio.com",
+    "project_id": "panic-link",
+    "storage_bucket": "panic-link.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:639549190722:android:1c794d29964a2151e7b3db",
+        "android_client_info": {
+          "package_name": "com.paniclink.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDsVPELwAA-AKPQwT5RFG_5seDgwXEUJh0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
