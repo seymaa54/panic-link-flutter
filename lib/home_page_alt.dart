@@ -1,11 +1,8 @@
-import 'dart:async';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:panic_link/contact_form.dart';
 import 'package:panic_link/device_status.dart';
-import 'package:panic_link/gloabal_var.dart';
 import 'package:panic_link/my_contacts.dart';
 import 'package:panic_link/my_profile_page.dart';
 import 'package:panic_link/provider/user_provider.dart';
@@ -47,6 +44,7 @@ class _HomePageAltState extends State<HomePageAlt>
     super.initState();
     _getCurrentUser();
   }
+
   void _getCurrentUser() {
     _currentUser = _auth.currentUser;
     if (_currentUser != null) {
@@ -55,24 +53,26 @@ class _HomePageAltState extends State<HomePageAlt>
       _loadContacts();
     }
   }
+
   void _loadContacts() {
     // Önce var olan dinleyiciyi kaldıralım
-    _database.child('users')
+    _database
+        .child('users')
         .child(_currentUser!.uid)
         .child('contacts')
         .get()
         .then((DataSnapshot dataSnapshot) {
-    dynamic data = dataSnapshot.value;
+      dynamic data = dataSnapshot.value;
 
       print('Contacts Data: $data'); // Veriyi debug etmek için ekleyin
 
-    if (data != null && data.isNotEmpty) {
-    setState(() {
-    _contacts = (data as Map).values.map((contactData) {
-    print('Contact Data: $contactData'); // Debug için ekleyin
-    return Contact.fromMap(Map<String, dynamic>.from(contactData));
-    }).toList();
-    });
+      if (data != null && data.isNotEmpty) {
+        setState(() {
+          _contacts = (data as Map).values.map((contactData) {
+            print('Contact Data: $contactData'); // Debug için ekleyin
+            return Contact.fromMap(Map<String, dynamic>.from(contactData));
+          }).toList();
+        });
 
         // Eğer kişi listesi boşsa alert dialogu kaldıralım
         _isAlertShown = false;
@@ -113,7 +113,8 @@ class _HomePageAltState extends State<HomePageAlt>
         }
       }
 
-      print('LOAD Parsed Contacts: $_contacts'); // Kontakların işlenmiş halini debug için ekleyin
+      print(
+          'LOAD Parsed Contacts: $_contacts'); // Kontakların işlenmiş halini debug için ekleyin
     }, onError: (error) {
       print('Veriler alınırken hata oluştu: $error');
     });
@@ -167,8 +168,9 @@ class _HomePageAltState extends State<HomePageAlt>
         backgroundColor: Colors.white,
         body: SafeArea(
           top: true,
-          child:  Consumer<UserProvider>(
-            builder: (context, userProvider, _) {      // Kullanıcı verilerini al
+          child: Consumer<UserProvider>(
+            builder: (context, userProvider, _) {
+              // Kullanıcı verilerini al
               UserModel? userData = userProvider.userData;
               return Stack(
                 children: [
@@ -181,7 +183,8 @@ class _HomePageAltState extends State<HomePageAlt>
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
                               Padding(
-                                padding: EdgeInsetsDirectional.fromSTEB(0, 8, 8, 0),
+                                padding:
+                                    EdgeInsetsDirectional.fromSTEB(0, 8, 8, 0),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.max,
                                   children: [
@@ -198,26 +201,30 @@ class _HomePageAltState extends State<HomePageAlt>
                                             decoration: BoxDecoration(
                                               shape: BoxShape.circle,
                                             ),
-                                            child:userData != null && userData.profileImageUrl != null
+                                            child: userData != null &&
+                                                    userData.profileImageUrl !=
+                                                        null
                                                 ? Image.network(
-                                              userData.profileImageUrl!,
-                                              fit: BoxFit.cover,
-                                            )
+                                                    userData.profileImageUrl!,
+                                                    fit: BoxFit.cover,
+                                                  )
                                                 : Image.asset(
-                                              'assets/images/user.png',
-                                              fit: BoxFit.cover,
-                                            ),
+                                                    'assets/images/user.png',
+                                                    fit: BoxFit.cover,
+                                                  ),
                                           ),
                                         ),
                                       ],
                                     ),
                                     Padding(
-                                      padding:
-                                      EdgeInsetsDirectional.fromSTEB(12, 0, 0, 0),
+                                      padding: EdgeInsetsDirectional.fromSTEB(
+                                          12, 0, 0, 0),
                                       child: Column(
                                         mainAxisSize: MainAxisSize.max,
-                                        mainAxisAlignment: MainAxisAlignment.start,
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Row(
                                             mainAxisSize: MainAxisSize.max,
@@ -235,8 +242,9 @@ class _HomePageAltState extends State<HomePageAlt>
                                             ],
                                           ),
                                           Padding(
-                                            padding: EdgeInsetsDirectional.fromSTEB(
-                                                0, 4, 0, 0),
+                                            padding:
+                                                EdgeInsetsDirectional.fromSTEB(
+                                                    0, 4, 0, 0),
                                             child: Text(
                                               'Cihaz bağlantısını yönetin ve kontrol edin.',
                                               maxLines: 3,
@@ -255,7 +263,8 @@ class _HomePageAltState extends State<HomePageAlt>
                                 ),
                               ),
                               Padding(
-                                padding: EdgeInsetsDirectional.fromSTEB(0, 24, 0, 0),
+                                padding:
+                                    EdgeInsetsDirectional.fromSTEB(0, 24, 0, 0),
                                 child: Container(
                                   width: MediaQuery.of(context).size.width,
                                   decoration: BoxDecoration(
@@ -300,7 +309,7 @@ class _HomePageAltState extends State<HomePageAlt>
                                         child: Row(
                                           mainAxisSize: MainAxisSize.max,
                                           mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
                                             Container(
                                               width: 105,
@@ -308,14 +317,18 @@ class _HomePageAltState extends State<HomePageAlt>
                                               decoration: BoxDecoration(
                                                 color: Colors.white60,
                                                 borderRadius:
-                                                BorderRadius.circular(8),
+                                                    BorderRadius.circular(8),
                                               ),
                                               child: Builder(
                                                 builder: (context) => InkWell(
-                                                  splashColor: Colors.transparent,
-                                                  focusColor: Colors.transparent,
-                                                  hoverColor: Colors.transparent,
-                                                  highlightColor: Colors.transparent,
+                                                  splashColor:
+                                                      Colors.transparent,
+                                                  focusColor:
+                                                      Colors.transparent,
+                                                  hoverColor:
+                                                      Colors.transparent,
+                                                  highlightColor:
+                                                      Colors.transparent,
                                                   onTap: () async {
                                                     await showDialog(
                                                       context: context,
@@ -323,46 +336,50 @@ class _HomePageAltState extends State<HomePageAlt>
                                                         return Dialog(
                                                           elevation: 0,
                                                           insetPadding:
-                                                          EdgeInsets.zero,
+                                                              EdgeInsets.zero,
                                                           backgroundColor:
-                                                          Colors.transparent,
-                                                          alignment:
-                                                          AlignmentDirectional(
-                                                              0, 0)
+                                                              Colors
+                                                                  .transparent,
+                                                          alignment: AlignmentDirectional(
+                                                                  0, 0)
                                                               .resolve(
-                                                              Directionality.of(
-                                                                  context)),
+                                                                  Directionality.of(
+                                                                      context)),
                                                           child: Container(
                                                             height: 400,
                                                             width: 400,
                                                           ),
                                                         );
                                                       },
-                                                    ).then(
-                                                            (value) => setState(() {}));
+                                                    ).then((value) =>
+                                                        setState(() {}));
                                                   },
                                                   child: Container(
                                                     width: 100,
                                                     height: 100,
                                                     child: Column(
-                                                      mainAxisSize: MainAxisSize.max,
+                                                      mainAxisSize:
+                                                          MainAxisSize.max,
                                                       mainAxisAlignment:
-                                                      MainAxisAlignment.center,
+                                                          MainAxisAlignment
+                                                              .center,
                                                       children: [
                                                         Icon(
-                                                          Icons.swap_horiz_rounded,
+                                                          Icons
+                                                              .swap_horiz_rounded,
                                                           color: Colors.grey,
                                                           size: 40,
                                                         ),
                                                         Padding(
                                                           padding:
-                                                          EdgeInsetsDirectional
-                                                              .fromSTEB(
-                                                              0, 8, 0, 0),
+                                                              EdgeInsetsDirectional
+                                                                  .fromSTEB(0,
+                                                                      8, 0, 0),
                                                           child: Text(
                                                             'Transfer',
                                                             style: TextStyle(
-                                                              fontFamily: 'Lexend',
+                                                              fontFamily:
+                                                                  'Lexend',
                                                               letterSpacing: 0,
                                                             ),
                                                           ),
@@ -379,21 +396,25 @@ class _HomePageAltState extends State<HomePageAlt>
                                               decoration: BoxDecoration(
                                                 color: Colors.white60,
                                                 borderRadius:
-                                                BorderRadius.circular(8),
+                                                    BorderRadius.circular(8),
                                               ),
                                               child: InkWell(
                                                 splashColor: Colors.transparent,
                                                 focusColor: Colors.transparent,
                                                 hoverColor: Colors.transparent,
-                                                highlightColor: Colors.transparent,
+                                                highlightColor:
+                                                    Colors.transparent,
                                                 onTap: () async {
-                                                  Navigator.pushNamed(context,
-                                                      RealTimeTracking.routeName);
+                                                  Navigator.pushNamed(
+                                                      context,
+                                                      RealTimeTracking
+                                                          .routeName);
                                                 },
                                                 child: Column(
-                                                  mainAxisSize: MainAxisSize.max,
+                                                  mainAxisSize:
+                                                      MainAxisSize.max,
                                                   mainAxisAlignment:
-                                                  MainAxisAlignment.center,
+                                                      MainAxisAlignment.center,
                                                   children: [
                                                     Icon(
                                                       Icons
@@ -402,8 +423,10 @@ class _HomePageAltState extends State<HomePageAlt>
                                                       size: 40,
                                                     ),
                                                     Padding(
-                                                      padding: EdgeInsetsDirectional
-                                                          .fromSTEB(0, 8, 0, 0),
+                                                      padding:
+                                                          EdgeInsetsDirectional
+                                                              .fromSTEB(
+                                                                  0, 8, 0, 0),
                                                       child: Text(
                                                         'Anlık İzleme',
                                                         style: TextStyle(
@@ -422,21 +445,23 @@ class _HomePageAltState extends State<HomePageAlt>
                                               decoration: BoxDecoration(
                                                 color: Colors.white60,
                                                 borderRadius:
-                                                BorderRadius.circular(8),
+                                                    BorderRadius.circular(8),
                                               ),
                                               child: InkWell(
                                                 splashColor: Colors.transparent,
                                                 focusColor: Colors.transparent,
                                                 hoverColor: Colors.transparent,
-                                                highlightColor: Colors.transparent,
+                                                highlightColor:
+                                                    Colors.transparent,
                                                 onTap: () async {
                                                   Navigator.pushNamed(context,
                                                       DeviceStatus.routeName);
                                                 },
                                                 child: Column(
-                                                  mainAxisSize: MainAxisSize.max,
+                                                  mainAxisSize:
+                                                      MainAxisSize.max,
                                                   mainAxisAlignment:
-                                                  MainAxisAlignment.center,
+                                                      MainAxisAlignment.center,
                                                   children: [
                                                     Icon(
                                                       Icons.settings,
@@ -444,8 +469,10 @@ class _HomePageAltState extends State<HomePageAlt>
                                                       size: 40,
                                                     ),
                                                     Padding(
-                                                      padding: EdgeInsetsDirectional
-                                                          .fromSTEB(0, 8, 0, 0),
+                                                      padding:
+                                                          EdgeInsetsDirectional
+                                                              .fromSTEB(
+                                                                  0, 8, 0, 0),
                                                       child: Text(
                                                         'Cihaz Ayarları',
                                                         style: TextStyle(
@@ -463,9 +490,9 @@ class _HomePageAltState extends State<HomePageAlt>
                                       ),
                                       Column(
                                         mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                            MainAxisAlignment.spaceBetween,
                                         crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
+                                            CrossAxisAlignment.stretch,
                                         children: [
                                           Padding(
                                             padding: const EdgeInsets.symmetric(
@@ -473,43 +500,48 @@ class _HomePageAltState extends State<HomePageAlt>
                                             child: Card(
                                               child: Container(
                                                 child: Row(
-                                                  mainAxisSize: MainAxisSize.max,
+                                                  mainAxisSize:
+                                                      MainAxisSize.max,
                                                   children: [
                                                     Expanded(
                                                       child: InkWell(
                                                         splashColor:
-                                                        Colors.transparent,
+                                                            Colors.transparent,
                                                         focusColor:
-                                                        Colors.transparent,
+                                                            Colors.transparent,
                                                         hoverColor:
-                                                        Colors.transparent,
+                                                            Colors.transparent,
                                                         highlightColor:
-                                                        Colors.transparent,
+                                                            Colors.transparent,
                                                         onTap: () async {},
                                                         child: Container(
                                                           height: 420,
-                                                          decoration: BoxDecoration(
-                                                            color: Colors.white60,
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            color:
+                                                                Colors.white60,
                                                             borderRadius:
-                                                            BorderRadius.circular(
-                                                                8),
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        8),
                                                           ),
                                                           child: Column(
                                                             mainAxisSize:
-                                                            MainAxisSize.max,
+                                                                MainAxisSize
+                                                                    .max,
                                                             mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .center,
+                                                                MainAxisAlignment
+                                                                    .center,
                                                             children: [
                                                               Container(
                                                                 width: 260,
                                                                 height: 260,
                                                                 decoration:
-                                                                BoxDecoration(
-                                                                  shape:
-                                                                  BoxShape.circle,
+                                                                    BoxDecoration(
+                                                                  shape: BoxShape
+                                                                      .circle,
                                                                   gradient:
-                                                                  LinearGradient(
+                                                                      LinearGradient(
                                                                     colors: [
                                                                       Color(
                                                                           0xFF00968A), // İlk renk
@@ -534,9 +566,12 @@ class _HomePageAltState extends State<HomePageAlt>
                                                               ),
                                                               Padding(
                                                                 padding:
-                                                                EdgeInsetsDirectional
-                                                                    .fromSTEB(0,
-                                                                    8, 0, 60),
+                                                                    EdgeInsetsDirectional
+                                                                        .fromSTEB(
+                                                                            0,
+                                                                            8,
+                                                                            0,
+                                                                            60),
                                                               ),
                                                             ],
                                                           ),

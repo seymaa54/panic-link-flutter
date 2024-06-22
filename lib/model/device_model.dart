@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class DeviceModel {
   String deviceId;
   String deviceName;

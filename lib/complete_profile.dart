@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:panic_link/login_page.dart';
@@ -68,26 +67,38 @@ class _CompleteProfileState extends State<CompleteProfile> {
 
   void updateProfile() async {
     try {
-      //kullanıcının userId değerine göre adlandırılmış bir dosya oluşturur.
-      final storageReference = FirebaseStorage.instance
-          .ref()
-          .child('profile_images')
-          .child('$widget.userId.jpg');
+      String? downloadUrl;
 
-      //_imageFile nesnesini Firebase Storage'da belirtilen storageReference konumuna yükler.
-      final uploadTask = storageReference.putFile(_imageFile!);
-      final downloadUrl = await (await uploadTask).ref.getDownloadURL();
+      // Profil resmi eklenmişse yükle
+      if (_imageFile != null) {
+        // Benzersiz bir dosya adı oluştur
+        final String fileName = '${widget.userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final storageReference = FirebaseStorage.instance
+            .ref()
+            .child('profile_images')
+            .child(fileName);
+
+        // Resmi Firebase Storage'a yükle
+        final uploadTask = storageReference.putFile(_imageFile!);
+        downloadUrl = await (await uploadTask).ref.getDownloadURL();
+      }
 
       // Kullanıcı verilerini güncelle
-      DatabaseReference userRef =
-          FirebaseDatabase.instance.ref().child('users').child(widget.userId);
-      await userRef.update({
+      DatabaseReference userRef = FirebaseDatabase.instance.ref().child('users').child(widget.userId);
+      Map<String, dynamic> userData = {
         'name': _firstNameController.text.trim(),
         'surname': _lastNameController.text.trim(),
         'identityNumber': _idNumberController.text.trim(),
         'phone': _telNumberController.text.trim(),
         'profileImageUrl': downloadUrl,
-      });
+      };
+
+      // Profil resmi eklenmişse URL'yi ekle
+      if (downloadUrl != null) {
+        userData['profileImageUrl'] = downloadUrl;
+      }
+
+      await userRef.update(userData);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -104,8 +115,6 @@ class _CompleteProfileState extends State<CompleteProfile> {
       );
     }
   }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(

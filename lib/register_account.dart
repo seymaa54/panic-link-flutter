@@ -58,17 +58,17 @@ class _RegisterAccountState extends State<RegisterAccount> {
 
   registerNewUser() async {
     final User? userFirebase = (await FirebaseAuth.instance
-            .createUserWithEmailAndPassword(
+        .createUserWithEmailAndPassword(
       email: _emailController.text.trim(),
       password: _passwordController.text.trim(),
     )
-            .catchError((errorMessage) {
+        .catchError((errorMessage) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(errorMessage.toString())));
     }))
         .user;
     DatabaseReference usersRef =
-        FirebaseDatabase.instance.ref().child("users").child(userFirebase!.uid);
+    FirebaseDatabase.instance.ref().child("users").child(userFirebase!.uid);
     Map userDataMap = {
       "userId": userFirebase.uid,
       "name": '',

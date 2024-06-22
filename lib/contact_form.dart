@@ -79,17 +79,30 @@ class _ContactFormState extends State<ContactForm> {
 
       // Yeni Contact oluşturalım
       Contact newContact = Contact(
-        contactId: _cId,
+        contactId: widget.contact != null ? widget.contact!.contactId : _cId,
         firstName: firstName,
         lastName: lastName,
         email: email,
         phoneNumber: phoneNumber,
       );
 
-      // ContactProvider kullanarak yeni contact ekleyelim
       ContactProvider contactProvider = ContactProvider(_currentUser!.uid);
-      await contactProvider.addContact(newContact);
+      // Eğer düzenleme modundayızsa, contactId'yi aktar
+      if (widget.contact != null) {
+        // updateContact metodunu çağır
+        await contactProvider.updateContact(_cId,newContact);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Kişi başarıyla eklendi')),
 
+        );
+      } else {
+        // Yeni bir kişi ekleniyor, saveContact metodunu çağır
+        await contactProvider.addContact(newContact);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Yeni kişi başarıyla eklendi')),
+
+        );
+      }
       // İşlem tamamlandıktan sonra formu temizleyelim
       _nameController.clear();
       _surnameController.clear();
@@ -97,10 +110,7 @@ class _ContactFormState extends State<ContactForm> {
       _emailController.clear();
 
       // Kullanıcıya işlem başarılı mesajı verebilirsiniz
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Yeni kişi başarıyla eklendi')),
 
-      );
     }
     Navigator.pushNamed(
         context, MyContacts.routeName);
@@ -147,7 +157,7 @@ class _ContactFormState extends State<ContactForm> {
                             Padding(
                               padding: EdgeInsets.only(left: 19),
                               child: Text(
-                                'Kişi Ekle',
+                                widget.contact != null ? 'Düzenle' : 'Kişi Ekle',
                                 style: TextStyle(
                                   color: Colors.black54,
                                   fontSize: 28,

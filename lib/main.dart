@@ -1,10 +1,8 @@
-import 'dart:developer';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:panic_link/complete_profile.dart';
 import 'package:panic_link/connect_device.dart';
 import 'package:panic_link/contact_form.dart';
+import 'package:panic_link/my_profile_page.dart';
 import 'package:panic_link/provider/contact_provider.dart'; // ContactProvider importu
 import 'package:panic_link/device_status.dart';
 import 'package:panic_link/edit_profile.dart';
@@ -57,6 +55,7 @@ class MyApp extends StatelessWidget {
           EditProfile.routeName: (context) => const EditProfile(),
           ForgotPassword.routeName: (context) => const ForgotPassword(),
           HomePageAlt.routeName: (context) => const HomePageAlt(),
+          MyProfilePage.routeName: (context) =>  MyProfilePage(),
           LoginPage.routeName: (context) => const LoginPage(),
           MyContacts.routeName: (context) => const MyContacts(),
           PrivacyPolicy.routeName: (context) => const PrivacyPolicy(),

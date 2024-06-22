@@ -104,29 +104,45 @@ class _MyContactsState extends State<MyContacts> {
     );
   }
 
-  void _deleteContact(Contact contact) {
-    context.read<ContactProvider>().deleteContact(contact.contactId.toString());
+  void _deleteContact(Contact contact) async {
+    try {
+      // Firebase'de contact düğümünden belirtilen contact'ı silelim
+      await _database
+          .child('users')
+          .child(_currentUser!.uid)
+          .child('contacts')
+          .child(contact.contactId.toString())
+          .remove();
 
-    // Veriyi hemen güncellemek için setState içinde _loadContacts'u çağırın
-    setState(() {
-      _contacts.remove(contact);
-   //   _loadContacts();
-    });
+      // Veriyi hemen güncellemek için setState içinde _contacts'u güncelleyin
+      setState(() {
+        _contacts.remove(contact);
+      });
 
-    // Show snackbar to confirm deletion
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${contact.firstName} ${contact.lastName} silindi.'),
-        action: SnackBarAction(
-          label: 'Geri Al',
-          onPressed: () {
-            setState(() {
-              _contacts.add(contact);
-            });
-          },
+      // Silme işlemi başarılı olduğunda kullanıcıya bildirim göster
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${contact.firstName} ${contact.lastName} silindi.'),
+          action: SnackBarAction(
+            label: 'Geri Al',
+            onPressed: () {
+              // Geri alındığında kişiyi tekrar ekle
+              setState(() {
+                _contacts.add(contact);
+              });
+            },
+          ),
         ),
-      ),
-    );
+      );
+    } catch (error) {
+      // Hata durumunda bildirim yap
+      print('Contact silinirken hata oluştu: $error');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Silme işlemi sırasında bir hata oluştu.'),
+        ),
+      );
+    }
   }
 
   @override

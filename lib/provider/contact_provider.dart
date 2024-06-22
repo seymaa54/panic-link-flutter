@@ -43,9 +43,12 @@ class ContactProvider with ChangeNotifier {
   Future<void> addContact(Contact newContact) async {
     try {
       // Firebase'de contact düğümüne yeni contact ekleyelim
-      var newContactRef = _database.child('users').child(_userId).child('contacts').push();
-      newContact.contactId = newContactRef.key!; // Firebase'den otomatik olarak oluşturulan ID'yi al
-      await newContactRef.set(newContact.toMap()); // Contact'i Firebase'e kaydet
+      var newContactRef =
+          _database.child('users').child(_userId).child('contacts').push();
+      newContact.contactId = newContactRef
+          .key!; // Firebase'den otomatik olarak oluşturulan ID'yi al
+      await newContactRef
+          .set(newContact.toMap()); // Contact'i Firebase'e kaydet
 
       // Başarılı eklemeyi bildirelim
       print(
@@ -57,25 +60,24 @@ class ContactProvider with ChangeNotifier {
   }
 
   // Contact silmek için metot
-  Future<void> deleteContact(String contactId) async {
+  /* Future<void> deleteContact(Contact contact) async {
     try {
-      // Firebase'de contact düğümünden belirtilen contact'ı silelim
-      await _database
-          .child('users')
-          .child(_userId)
-          .child('contacts')
-          .child(contactId)
-          .remove();
+      if (contact.contactId != null) {
+        await _database
+            .child('users')
+            .child(_userId)
+            .child('contacts')
+            .child(contact.contactId!)
+            .remove();
 
-      // Başarılı silmeyi bildirelim
-      print('Contact silindi: $contactId');
+        print('Contact silindi: ${contact.contactId}');
+      } else {
+        print('Contact ID null: Contact silinemedi');
+      }
     } catch (error) {
-      // Hata durumunda bildirim yapalım
       print('Contact silinirken hata oluştu: $error');
     }
-  }
-
-  // Contact güncellemek için metot (opsiyonel olarak kullanılabilir)
+  }*/
   Future<void> updateContact(String contactId, Contact updatedContact) async {
     try {
       // Firebase'de contact düğümünde belirtilen contact'ı güncelleyelim

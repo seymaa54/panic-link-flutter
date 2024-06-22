@@ -1,15 +1,16 @@
-
-
 import 'dart:io';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
+import 'package:panic_link/model/user_model.dart'; // Contact modelinizi buraya göre düzenleyin
 
 class EditProfile extends StatefulWidget {
   static const String routeName = '/editProfile';
+  final UserModel? user;
 
-  const EditProfile({Key? key}) : super(key: key);
+  const EditProfile({Key? key, this.user}) : super(key: key);
 
   @override
   State<EditProfile> createState() => _EditProfileState();
@@ -17,16 +18,18 @@ class EditProfile extends StatefulWidget {
 
 class _EditProfileState extends State<EditProfile> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final _surnameController = TextEditingController();
   final _emailController = TextEditingController();
-
-  final scaffoldKey = GlobalKey<ScaffoldState>();
   final _phoneController = TextEditingController();
+  final scaffoldKey = GlobalKey<ScaffoldState>();
   PhoneNumber number = PhoneNumber(isoCode: 'TR');
   String initialCountry = 'TR';
-
   late ImagePicker picker;
   XFile? _imageFile;
+  String? _profileImageUrl;
+  late FirebaseAuth _auth;
+  late User? _currentUser;
 
   Future<void> _pickImage(ImageSource source) async {
     final pickedImage = await picker.pickImage(source: source);
@@ -50,9 +53,28 @@ class _EditProfileState extends State<EditProfile> {
   @override
   void initState() {
     super.initState();
-    // +90 Türkiye kodu ile başlat
-    _phoneController.text = '+90';
-    picker = ImagePicker();
+    _auth = FirebaseAuth.instance;
+    _currentUser = _auth.currentUser;
+
+    // Verileri temizle
+    _nameController.clear();
+    _surnameController.clear();
+    _emailController.clear();
+    _phoneController.clear();
+    _imageFile = null;
+    _profileImageUrl = null;
+
+    if (_currentUser != null) {
+      // Yeni kullanıcı bilgilerini yükle
+      _nameController.text = widget.user?.name ?? '';
+      _surnameController.text = widget.user?.surname ?? '';
+      _phoneController.text = widget.user?.phone ?? '';
+      _emailController.text = widget.user?.email ?? '';
+      _profileImageUrl = widget.user?.profileImageUrl;
+    } else {
+      _phoneController.text = '+90';
+      picker = ImagePicker();
+    }
   }
 
   String? validateEmail(String? value) {
@@ -102,66 +124,75 @@ class _EditProfileState extends State<EditProfile> {
             width: MediaQuery.of(context).size.width,
             height: MediaQuery.of(context).size.height,
             child: SingleChildScrollView(
-              child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.all(2),
-                      child: Container(
-                        width: 80,
-                        height: 80,
-                        clipBehavior: Clip.antiAlias,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                        ),
-                        child: _imageFile != null
-                            ? ClipOval(
-                          child: Image.file(
-                            File(_imageFile!.path),
-                            height: 100,
-                            width: 100,
-                            fit: BoxFit.cover,
-                          ),
-                        )
-                            : Image.asset('assets/images/avatar.png'),
-                      ),
+              child: Column(mainAxisSize: MainAxisSize.max, children: [
+                Padding(
+                  padding: EdgeInsets.all(2),
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
                     ),
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(0, 16, 0, 0),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: Text("Resim Seç"),
-                                content: SingleChildScrollView(
-                                  child: ListBody(
-                                    children: <Widget>[
-                                      GestureDetector(
-                                        child: Text("Galeriden Seç"),
-                                        onTap: () {
-                                          _pickImage(ImageSource.gallery);
-                                          Navigator.of(context).pop();
-                                        },
-                                      ),
-                                      Padding(padding: EdgeInsets.all(8.0)),
-                                      GestureDetector(
-                                        child: Text("Kameradan Çek"),
-                                        onTap: () {
-                                          _pickImage(ImageSource.camera);
-                                          Navigator.of(context).pop();
-                                        },
-                                      ),
-                                    ],
-                                  ),
+                    child: _imageFile != null
+                        ? ClipOval(
+                            child: Image.file(
+                              File(_imageFile!.path),
+                              height: 100,
+                              width: 100,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : (_profileImageUrl != null
+                            ? ClipOval(
+                                child: Image.network(
+                                  _profileImageUrl!,
+                                  height: 100,
+                                  width: 100,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Icon(Icons.error),
                                 ),
-                              );
-                            },
+                              )
+                            : Image.asset('assets/images/user.png')),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(0, 16, 0, 0),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text("Resim Seç"),
+                            content: SingleChildScrollView(
+                              child: ListBody(
+                                children: <Widget>[
+                                  GestureDetector(
+                                    child: Text("Galeriden Seç"),
+                                    onTap: () {
+                                      _pickImage(ImageSource.gallery);
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                  Padding(padding: EdgeInsets.all(8.0)),
+                                  GestureDetector(
+                                    child: Text("Kameradan Çek"),
+                                    onTap: () {
+                                      _pickImage(ImageSource.camera);
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
                           );
                         },
-                    child: Text(
-                      'Fotoğrafı değiştir',
+                      );
+                    },
+                    child: Text( _profileImageUrl!=null ?
+                      'Fotoğrafı değiştir':'Fotoğraf Ekle',
                       style: TextStyle(
                         fontSize: 14,
                         fontFamily: 'Lexend',
@@ -202,9 +233,30 @@ class _EditProfileState extends State<EditProfile> {
                         Padding(
                           padding: EdgeInsets.only(top: 20),
                           child: TextFormField(
-                            controller: _firstNameController,
+                            controller: _nameController,
                             decoration: InputDecoration(
                               labelText: 'Ad',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey[200],
+                              contentPadding: EdgeInsets.all(20),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Lütfen adınızı giriniz';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.only(top: 20),
+                          child: TextFormField(
+                            controller: _nameController,
+                            decoration: InputDecoration(
+                              labelText: 'Soyad',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -257,11 +309,11 @@ class _EditProfileState extends State<EditProfile> {
                               fillColor: Colors.grey[200],
                               contentPadding: EdgeInsets.all(20),
                             ),
-                            validator:validateEmail,
+                            validator: validateEmail,
                           ),
                         ),
                         Padding(
-                          padding: EdgeInsets.only(top: 50),
+                          padding: EdgeInsets.only(top: 30),
                           child: ElevatedButton(
                             onPressed: () {
                               if (_formKey.currentState!.validate()) {
