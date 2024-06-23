@@ -176,59 +176,59 @@ class UserProvider with ChangeNotifier {
   }
 
 
-      //bu kısımda olmuyor
-      void updateUserData(Map<String, dynamic> newData) {
-        if (_userData != null) {
-          _userData!.name = newData['name'] ?? _userData!.name;
-          _userData!.surname = newData['surname'] ?? _userData!.surname;
-          _userData!.email = newData['email'] ?? _userData!.email;
-          _userData!.phone = newData['phone'] ?? _userData!.phone;
-          _userData!.profileImageUrl =
-              newData['profileImage'] ?? _userData!.profileImageUrl;
+  //bu kısımda olmuyor
+  void updateUserData(Map<String, dynamic> newData) {
+    if (_userData != null) {
+      _userData!.name = newData['name'] ?? _userData!.name;
+      _userData!.surname = newData['surname'] ?? _userData!.surname;
+      _userData!.email = newData['email'] ?? _userData!.email;
+      _userData!.phone = newData['phone'] ?? _userData!.phone;
+      _userData!.profileImageUrl =
+          newData['profileImage'] ?? _userData!.profileImageUrl;
 
-          // Firebase veritabanında güncelleme yap
-          _userRef.update(_userData!.toMap());
-          notifyListeners();
-        }
-      }
-      Future<void> deleteUser() async {
-        await _userRef.remove();
-        // Kullanıcı verilerini yerel olarak da temizle
-        _userData = null;
-        _deviceData = null; // Cihaz verilerini temizle
+      // Firebase veritabanında güncelleme yap
+      _userRef.update(_userData!.toMap());
+      notifyListeners();
+    }
+  }
+  Future<void> deleteUser() async {
+    await _userRef.remove();
+    // Kullanıcı verilerini yerel olarak da temizle
+    _userData = null;
+    _deviceData = null; // Cihaz verilerini temizle
+    notifyListeners();
+    //update den sonra fetch user datauyı çağıarbilrisn
+  }
+  void addDevice(DeviceModel device) {
+    if (_userData!.deviceId == null) {
+      final deviceRef = FirebaseDatabase.instance.reference()
+          .child('devices')
+          .push();
+      deviceRef.set(device.toMap()).then((_) {
+        _userData!.deviceId =
+            deviceRef.key; // Yeni cihazın ID'sini kullanıcıya atayın
+        _userRef.update({'deviceId': _userData!.deviceId});
         notifyListeners();
-        //update den sonra fetch user datauyı çağıarbilrisn
+      });
+    } else {
+      print('Kullanıcı zaten bir cihaza sahip.');
+    }
+  }
+  void _fetchDevices() async {
+    if (_userData != null && _userData!.deviceId != null) {
+      final deviceRef = FirebaseDatabase.instance.reference()
+          .child('devices')
+          .child(_userData!.deviceId!);
+      DataSnapshot snapshot = (await deviceRef.once()) as DataSnapshot;
+      // Check for null value before processing
+      if (snapshot.value != null) {
+        _deviceData =
+            DeviceModel.fromMap(snapshot.value as Map<String, dynamic>);
+        notifyListeners();
       }
-      void addDevice(DeviceModel device) {
-        if (_userData!.deviceId == null) {
-          final deviceRef = FirebaseDatabase.instance.reference()
-              .child('devices')
-              .push();
-          deviceRef.set(device.toMap()).then((_) {
-            _userData!.deviceId =
-                deviceRef.key; // Yeni cihazın ID'sini kullanıcıya atayın
-            _userRef.update({'deviceId': _userData!.deviceId});
-            notifyListeners();
-          });
-        } else {
-          print('Kullanıcı zaten bir cihaza sahip.');
-        }
-      }
-      void _fetchDevices() async {
-        if (_userData != null && _userData!.deviceId != null) {
-          final deviceRef = FirebaseDatabase.instance.reference()
-              .child('devices')
-              .child(_userData!.deviceId!);
-          DataSnapshot snapshot = (await deviceRef.once()) as DataSnapshot;
-          // Check for null value before processing
-          if (snapshot.value != null) {
-            _deviceData =
-                DeviceModel.fromMap(snapshot.value as Map<String, dynamic>);
-            notifyListeners();
-          }
-        }
-      }
-      /* void addHelpCall(HelpCall helpCall) {
+    }
+  }
+/* void addHelpCall(HelpCall helpCall) {
       _userData!.helpCalls.add(helpCall);
       _userRef.child('helpCalls').push().set(helpCall.toMap());
       notifyListeners();
@@ -237,4 +237,4 @@ class UserProvider with ChangeNotifier {
       return _userData!.helpCalls;
     }*/
 
-    }
+}

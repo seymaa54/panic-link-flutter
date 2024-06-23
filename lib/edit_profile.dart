@@ -1,10 +1,15 @@
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
-import 'package:panic_link/model/user_model.dart'; // Contact modelinizi buraya göre düzenleyin
+import 'package:panic_link/model/user_model.dart';
+import 'package:panic_link/provider/user_provider.dart';
+import 'package:provider/provider.dart'; // Contact modelinizi buraya göre düzenleyin
 
 class EditProfile extends StatefulWidget {
   static const String routeName = '/editProfile';
@@ -26,24 +31,31 @@ class _EditProfileState extends State<EditProfile> {
   PhoneNumber number = PhoneNumber(isoCode: 'TR');
   String initialCountry = 'TR';
   late ImagePicker picker;
-  XFile? _imageFile;
+  File? _imageFile;
   String? _profileImageUrl;
   late FirebaseAuth _auth;
   late User? _currentUser;
+  late DatabaseReference databaseReference;
 
-  Future<void> _pickImage(ImageSource source) async {
+
+  void _pickImage(ImageSource source) async {
     final pickedImage = await picker.pickImage(source: source);
     setState(() {
-      _imageFile = pickedImage;
+      if (pickedImage != null) {
+        _imageFile = File(pickedImage.path);
+        _profileImageUrl = null;
+      }
     });
   }
-
   FocusNode _nameFocusNode = FocusNode();
+  FocusNode _surnameFocusNode = FocusNode();
+
   FocusNode _emailFocusNode = FocusNode();
   FocusNode _phoneFocusNode = FocusNode();
 
   @override
   void dispose() {
+    _surnameFocusNode.dispose();
     _nameFocusNode.dispose();
     _emailFocusNode.dispose();
     _phoneFocusNode.dispose();
@@ -56,6 +68,10 @@ class _EditProfileState extends State<EditProfile> {
     _auth = FirebaseAuth.instance;
     _currentUser = _auth.currentUser;
 
+    databaseReference = FirebaseDatabase.instance
+        .reference()
+        .child("users")
+        .child(widget.user!.userId);
     // Verileri temizle
     _nameController.clear();
     _surnameController.clear();
@@ -63,6 +79,9 @@ class _EditProfileState extends State<EditProfile> {
     _phoneController.clear();
     _imageFile = null;
     _profileImageUrl = null;
+
+    // ImagePicker'ı başlat
+    picker = ImagePicker();
 
     if (_currentUser != null) {
       // Yeni kullanıcı bilgilerini yükle
@@ -73,7 +92,6 @@ class _EditProfileState extends State<EditProfile> {
       _profileImageUrl = widget.user?.profileImageUrl;
     } else {
       _phoneController.text = '+90';
-      picker = ImagePicker();
     }
   }
 
@@ -90,7 +108,89 @@ class _EditProfileState extends State<EditProfile> {
     return null;
   }
 
-  @override
+  String getButtonText() {
+    if (_profileImageUrl != null && _imageFile == null) {
+      return 'Fotoğraf Değiştir';
+    } else {
+      return 'Fotoğraf Ekle';
+    }
+  }
+
+  Future<void> _reauthenticateUser(String password) async {
+    try {
+      // Mevcut kullanıcıyı alın
+      User? user = _auth.currentUser;
+
+      // Kimlik doğrulama bilgilerini oluşturun
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: user!.email!,
+        password: password,
+      );
+
+      // Kullanıcıyı yeniden kimlik doğrulama
+      await user.reauthenticateWithCredential(credential);
+    } catch (e) {
+      print("Reauthentication failed: $e");
+      throw e;
+    }
+  }
+
+  Future<void> _updateUserProfile(String password) async {
+    try {
+      String? downloadUrl;
+
+      if (_imageFile != null) {
+        final String fileName = '${widget.user!.userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final storageReference = FirebaseStorage.instance
+            .ref()
+            .child('profile_images')
+            .child(fileName);
+
+        final uploadTask = storageReference.putFile(_imageFile!);
+        downloadUrl = await (await uploadTask).ref.getDownloadURL();
+      }
+
+      // Kullanıcı verilerini güncelle
+      DatabaseReference userRef = FirebaseDatabase.instance.ref().child('users').child(widget.user!.userId);
+
+      Map<String, dynamic> userData = {
+        'name': _nameController.text.trim(),
+        'surname': _surnameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'phone': _phoneController.text.trim(),
+        'profileImageUrl': downloadUrl ?? _profileImageUrl,
+      };
+
+      if (downloadUrl != null) {
+        userData['profileImageUrl'] = downloadUrl;
+      }
+
+      await userRef.update(userData);
+
+      // Firebase Authentication'da e-posta güncelleme
+      if (_currentUser != null) {
+        // Kullanıcıyı yeniden kimlik doğrulama
+        await _reauthenticateUser(password);
+
+        // E-posta adresini güncelle
+        await _currentUser!.updateEmail(_emailController.text.trim());
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Değişiklikler başarıyla kaydedildi."),
+        ),
+      );
+
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Değişiklikler kaydedilirken bir hata oluştu: $e"),
+        ),
+      );
+    }
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
         key: scaffoldKey,
@@ -128,33 +228,35 @@ class _EditProfileState extends State<EditProfile> {
                 Padding(
                   padding: EdgeInsets.all(2),
                   child: Container(
-                    width: 80,
-                    height: 80,
-                    clipBehavior: Clip.antiAlias,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                    ),
+                    // Kullanıcı profil resmi gösterme alanı
                     child: _imageFile != null
                         ? ClipOval(
-                            child: Image.file(
-                              File(_imageFile!.path),
-                              height: 100,
-                              width: 100,
-                              fit: BoxFit.cover,
-                            ),
-                          )
+                      child: Image.file(
+                        File(_imageFile!.path),
+                        height: 100,
+                        width: 100,
+                        fit: BoxFit.cover,
+                      ),
+                    )
                         : (_profileImageUrl != null
-                            ? ClipOval(
-                                child: Image.network(
-                                  _profileImageUrl!,
-                                  height: 100,
-                                  width: 100,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      Icon(Icons.error),
-                                ),
-                              )
-                            : Image.asset('assets/images/user.png')),
+                        ? ClipOval(
+                      child: Image.network(
+                        _profileImageUrl!,
+                        height: 100,
+                        width: 100,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            Icon(Icons.error),
+                      ),
+                    )
+                        : ClipOval(
+                      child: Image.asset(
+                        'assets/images/user.png',
+                        height: 100,
+                        width: 100,
+                        fit: BoxFit.cover,
+                      ),
+                    )),
                   ),
                 ),
                 Padding(
@@ -191,8 +293,8 @@ class _EditProfileState extends State<EditProfile> {
                         },
                       );
                     },
-                    child: Text( _profileImageUrl!=null ?
-                      'Fotoğrafı değiştir':'Fotoğraf Ekle',
+                    child: Text(
+                      getButtonText(),
                       style: TextStyle(
                         fontSize: 14,
                         fontFamily: 'Lexend',
@@ -254,7 +356,7 @@ class _EditProfileState extends State<EditProfile> {
                         Padding(
                           padding: EdgeInsets.only(top: 20),
                           child: TextFormField(
-                            controller: _nameController,
+                            controller: _surnameController,
                             decoration: InputDecoration(
                               labelText: 'Soyad',
                               border: OutlineInputBorder(
@@ -285,12 +387,30 @@ class _EditProfileState extends State<EditProfile> {
                               fillColor: Colors.grey[200],
                               contentPadding: EdgeInsets.all(20),
                             ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Lütfen telefon numaranızı giriniz';
+                            keyboardType: TextInputType.phone,
+                            inputFormatters: [
+                              LengthLimitingTextInputFormatter(
+                                  13), // +90 ve 10 rakam sınırlaması için
+                              FilteringTextInputFormatter.deny(RegExp(
+                                  r'[^\+0-9]')), // Sadece +, 0-9 rakamları geçerli
+                            ],
+                            onTap: () {
+                              if (!_phoneController.text.startsWith('+90')) {
+                                // Eğer metin +90 ile başlamıyorsa, başına +90 ekleyelim
+                                _phoneController.text = '+90';
                               }
-                              if (!RegExp(r'^[0-9]{10}$').hasMatch(value)) {
-                                return 'Telefon Numarası Geçersiz';
+                            },
+                            onChanged: (value) {
+                              if (!_phoneController.text.startsWith('+90')) {
+                                // Kullanıcı metni sildiğinde veya değiştirdiğinde, başına +90 ekleyelim
+                                _phoneController.text = '+90';
+                              }
+                            },
+                            validator: (value) {
+                              if (value == null ||
+                                  value.isEmpty ||
+                                  value.length < 12) {
+                                return 'Lütfen geçerli bir telefon numarası giriniz';
                               }
                               return null;
                             },
@@ -317,7 +437,7 @@ class _EditProfileState extends State<EditProfile> {
                           child: ElevatedButton(
                             onPressed: () {
                               if (_formKey.currentState!.validate()) {
-                                // Form valid, process data
+                                _updateUserProfile(widget.user!.password.toString());
                               }
                             },
                             child: Text('Değişiklikleri Kaydet'),

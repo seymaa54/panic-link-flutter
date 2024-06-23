@@ -65,7 +65,7 @@ class _CompleteProfileState extends State<CompleteProfile> {
     });
   }
 
-  void updateProfile() async {
+  void _updateProfile() async {
     try {
       String? downloadUrl;
 
@@ -264,7 +264,7 @@ class _CompleteProfileState extends State<CompleteProfile> {
                     onPressed: () {
                       if (_formKey.currentState?.validate() ?? false) {
                         // Form geçerli, işlemleri yapabilirsiniz
-                        updateProfile();
+                        _updateProfile();
                       }
                     },
                     child: Text('Gönder'),

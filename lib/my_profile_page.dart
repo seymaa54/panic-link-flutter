@@ -3,6 +3,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:panic_link/change_password.dart';
 import 'package:panic_link/edit_profile.dart';
+import 'package:panic_link/login_page.dart';
 import 'package:panic_link/privacyPolicy.dart';
 import 'package:panic_link/provider/user_provider.dart';
 import 'package:provider/provider.dart';
@@ -34,6 +35,14 @@ class _MyProfilePageState extends State<MyProfilePage> with TickerProviderStateM
   }
 
   // Asenkron veri çekme fonksiyonu
+  void _signOutAndNavigateToLogin() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => LoginPage()),
+          (Route<dynamic> route) => false, // Tüm diğer sayfaları kapat
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -154,7 +163,7 @@ class _MyProfilePageState extends State<MyProfilePage> with TickerProviderStateM
                                           size: 25,
                                         ),
                                         onPressed: () {
-                                          print('IconButton pressed ...');
+                                          _signOutAndNavigateToLogin();
                                         },
                                       ),
                                     ),
