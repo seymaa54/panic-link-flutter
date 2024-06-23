@@ -115,7 +115,7 @@ class _EditProfileState extends State<EditProfile> {
       return 'Fotoğraf Ekle';
     }
   }
-
+//GUNCELLEM SORUNLUU
   Future<void> _reauthenticateUser(String password) async {
     try {
       // Mevcut kullanıcıyı alın

@@ -15,6 +15,7 @@ import 'package:panic_link/provider/user_provider.dart';
 import 'package:panic_link/real_time_tracking.dart';
 import 'package:panic_link/register_account.dart';
 import 'package:panic_link/scan_device.dart';
+import 'package:panic_link/verificationEmail.dart';
 import 'package:provider/provider.dart';
 import 'change_password.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -47,7 +48,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         initialRoute: '/',
         routes: {
-          '/': (context) => LoginPage(), // Ana sayfa route'u
+          '/': (context) =>LoginPage(), // Ana sayfa route'u
           ChangePassword.routeName: (context) => const ChangePassword(),
           ConnectDevice.routeName: (context) => const ConnectDevice(),
           ContactForm.routeName: (context) => const ContactForm(),
@@ -62,6 +63,7 @@ class MyApp extends StatelessWidget {
           RealTimeTracking.routeName: (context) => const RealTimeTracking(),
           RegisterAccount.routeName: (context) => const RegisterAccount(),
           ScanDevice.routeName: (context) => const ScanDevice(),
+          VerificationEmail.routeName:(context) => const VerificationEmail(),
         },
       ),
     );

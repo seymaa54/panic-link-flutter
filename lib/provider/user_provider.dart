@@ -9,8 +9,6 @@ import 'package:panic_link/model/device_model.dart';
 import '../model/contact_model.dart';
 import '../HelpCall.dart';
 
-
-
 /*
 ChangeNotifier sınıfından türediği için, bu sınıf içinde kullanıcı verilerini dinlemek
  ve güncellemek için gerekli mekanizmaları sağlayabilirsiniz.
@@ -26,7 +24,10 @@ class UserProvider with ChangeNotifier {
     _auth.authStateChanges().listen((User? user) {
       if (user != null) {
         // Firebase veritabanında, kullanıcının UID'sini kullanarak kullanıcı düğümüne (node) referans alınır.
-        _userRef = FirebaseDatabase.instance.reference().child('users').child(user.uid);
+        _userRef = FirebaseDatabase.instance
+            .reference()
+            .child('users')
+            .child(user.uid);
 
         // Kullanıcının verileri değiştiğinde veya herhangi bir güncelleme olduğunda bu dinleyici tetiklenir.
         _userRef.onValue.listen((event) {
@@ -34,8 +35,8 @@ class UserProvider with ChangeNotifier {
           final data = event.snapshot.value;
           if (data != null && data is Map) {
             // Alınan veriyi kullanıcı modeline uygun şekilde işleyerek bir nesne oluşturur.
-            _userData = UserModel.fromMap(Map<String, dynamic>.from(data as Map));
-
+            _userData =
+                UserModel.fromMap(Map<String, dynamic>.from(data as Map));
           } else {
             print("userdata model oluşmadı");
             _userData = null; // Veriler null ise kullanıcı verisini sıfırla
@@ -80,6 +81,14 @@ class UserProvider with ChangeNotifier {
     }
   }*/
 
+  Future<void> sendEmailVerificationLink() async {
+    try {
+      await _auth.currentUser!.sendEmailVerification();
+    } catch (e) {
+      print(e.toString());
+    }
+  }
+
   Future<void> getUserDataAfterSignIn(String email, String password) async {
     try {
       // Kullanıcıyı giriş yapmaya çalış await ise bir işlemin tamamlanmasını beklemek için
@@ -89,22 +98,24 @@ class UserProvider with ChangeNotifier {
       _auth.authStateChanges().listen((User? user) {
         if (user != null) {
           // Kullanıcı giriş yaptıktan sonra kullanıcı verilerini al
-          _userRef = FirebaseDatabase.instance.reference().child('users').child(
-              user.uid);
+          _userRef = FirebaseDatabase.instance
+              .reference()
+              .child('users')
+              .child(user.uid);
           /*
          DataSnapshot nesnesi, veritabanından alınan veriyi temsil eder.
          snapshot.value ile verinin var olup olmadığı kontrol edilir.
          Eğer veri varsa, UserModel.fromMap metodunu kullanarak snapshot.value'yi UserModel nesnesine dönüştürürüz.
          */
           _userRef.once().then((DataSnapshot snapshot) {
-            if (snapshot.value != null) {
-              _userData = UserModel.fromMap(Map<String, dynamic>.from(
-                  snapshot.value as Map<String, dynamic>));
-              notifyListeners();
-            } else {
-              print("Kullanıcı verileri bulunamadı.");
-            }
-          } as FutureOr Function(DatabaseEvent value));
+                if (snapshot.value != null) {
+                  _userData = UserModel.fromMap(Map<String, dynamic>.from(
+                      snapshot.value as Map<String, dynamic>));
+                  notifyListeners();
+                } else {
+                  print("Kullanıcı verileri bulunamadı.");
+                }
+              } as FutureOr Function(DatabaseEvent value));
         }
       });
     } catch (e) {
@@ -131,7 +142,8 @@ class UserProvider with ChangeNotifier {
 
     try {
       // 'users' düğümüne referans oluştur
-      databaseReference = FirebaseDatabase.instance.reference().child('users').child(userId);
+      databaseReference =
+          FirebaseDatabase.instance.reference().child('users').child(userId);
 
       // Dinleyici ekle
       databaseReference.onValue.listen((event) {
@@ -175,7 +187,6 @@ class UserProvider with ChangeNotifier {
     }
   }
 
-
   //bu kısımda olmuyor
   void updateUserData(Map<String, dynamic> newData) {
     if (_userData != null) {
@@ -191,6 +202,7 @@ class UserProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
   Future<void> deleteUser() async {
     await _userRef.remove();
     // Kullanıcı verilerini yerel olarak da temizle
@@ -199,11 +211,11 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
     //update den sonra fetch user datauyı çağıarbilrisn
   }
+
   void addDevice(DeviceModel device) {
     if (_userData!.deviceId == null) {
-      final deviceRef = FirebaseDatabase.instance.reference()
-          .child('devices')
-          .push();
+      final deviceRef =
+          FirebaseDatabase.instance.reference().child('devices').push();
       deviceRef.set(device.toMap()).then((_) {
         _userData!.deviceId =
             deviceRef.key; // Yeni cihazın ID'sini kullanıcıya atayın
@@ -214,9 +226,11 @@ class UserProvider with ChangeNotifier {
       print('Kullanıcı zaten bir cihaza sahip.');
     }
   }
+
   void _fetchDevices() async {
     if (_userData != null && _userData!.deviceId != null) {
-      final deviceRef = FirebaseDatabase.instance.reference()
+      final deviceRef = FirebaseDatabase.instance
+          .reference()
           .child('devices')
           .child(_userData!.deviceId!);
       DataSnapshot snapshot = (await deviceRef.once()) as DataSnapshot;
@@ -236,5 +250,4 @@ class UserProvider with ChangeNotifier {
     List<HelpCall> getHelpCalls() {
       return _userData!.helpCalls;
     }*/
-
 }

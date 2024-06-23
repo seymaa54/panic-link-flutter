@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:panic_link/complete_profile.dart';
 import 'package:panic_link/login_page.dart';
 import 'package:panic_link/privacyPolicy.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:panic_link/verificationEmail.dart';
 
 class RegisterAccount extends StatefulWidget {
   static const String routeName = '/registerAccount';
@@ -31,6 +34,8 @@ class _RegisterAccountState extends State<RegisterAccount> {
   bool passwordCreateVisibility = false;
   bool passwordConfirmVisibility = false;
   bool privacyPolicyChecked = false;
+  late User? _currentUser;
+
 
   @override
   void dispose() {
@@ -40,6 +45,7 @@ class _RegisterAccountState extends State<RegisterAccount> {
     _emailController.dispose();
     _confirmPasswordController.dispose();
     _passwordController.dispose();
+
     super.dispose();
   }
 
@@ -55,46 +61,79 @@ class _RegisterAccountState extends State<RegisterAccount> {
     }
     return null;
   }
-
-  registerNewUser() async {
-    final User? userFirebase = (await FirebaseAuth.instance
-        .createUserWithEmailAndPassword(
-      email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
-    )
-        .catchError((errorMessage) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(errorMessage.toString())));
-    }))
-        .user;
-    DatabaseReference usersRef =
-    FirebaseDatabase.instance.ref().child("users").child(userFirebase!.uid);
-    Map userDataMap = {
-      "userId": userFirebase.uid,
-      "name": '',
-      "surname": '',
-      "email": _emailController.text.trim(),
-      "password": _passwordController.text.trim(),
-      "identityNumber": '',
-      "phone": '',
-      "contacts": '',
-      "deviceId": '',
-      "identityNumber": '',
-      "helpCalls": '',
-
-      // Diğer alanlar başlangıçta null olarak eklenmeyecek
-
-    };
-    usersRef.set(userDataMap);
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        //complete profildeki userıd değişkenine firebasede oluşturulan uid değerini ekliyorum
-        builder: (context) => CompleteProfile(userId: userFirebase.uid),
-      ),
-    );
+  @override
+  void initState() {
+    super.initState();
+    _currentUser = FirebaseAuth.instance.currentUser;
   }
+  Future<void> registerNewUser(BuildContext context) async {
+    try {
+      if (_passwordController.text != _confirmPasswordController.text) {
+        throw "Parolalar Eşleşmiyor!";
+      }
 
+      UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      _currentUser = userCredential.user;
+
+      // Doğrulama e-postasını gönder
+      await _currentUser!.sendEmailVerification();
+
+      // Kullanıcı e-postasını doğrulayana kadar bekleyin
+      await _currentUser!.reload();
+      if (_currentUser!.emailVerified) {
+        // Firebase Realtime Database'e kullanıcı bilgilerini kaydetme
+        DatabaseReference usersRef = FirebaseDatabase.instance
+            .reference()
+            .child("users")
+            .child(_currentUser!.uid);
+
+        Map<String, dynamic> userDataMap = {
+          "userId": _currentUser!.uid,
+          "email": _emailController.text.trim(),
+          "password": _passwordController.text.trim(),
+          "name": '',
+          "surname": '',
+          "identityNumber": '',
+          "phone": '',
+          "contacts": '',
+          "deviceId": '',
+          "identityNumber": '',
+          "helpCalls": '',
+
+
+        };
+
+        usersRef.set(userDataMap);
+
+        // CompleteProfile sayfasına yönlendirme
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CompleteProfile(userId: _currentUser!.uid),
+          ),
+        );
+      } else {
+        // E-posta doğrulanmamışsa, kullanıcıyı doğrulama ekranına yönlendirme gerekli
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => VerificationEmail(),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+        ),
+      );
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -420,7 +459,7 @@ class _RegisterAccountState extends State<RegisterAccount> {
                                           );
                                         } else {
                                           //Fdssa
-                                          registerNewUser();
+                                          registerNewUser(context);
                                         }
                                       } else {
                                         ScaffoldMessenger.of(context)
