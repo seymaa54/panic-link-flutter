@@ -45,7 +45,6 @@ class _RegisterAccountState extends State<RegisterAccount> {
     _emailController.dispose();
     _confirmPasswordController.dispose();
     _passwordController.dispose();
-
     super.dispose();
   }
 

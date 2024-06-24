@@ -1,50 +1,53 @@
+import 'dart:developer';
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:panic_link/login_page.dart';
+import 'package:panic_link/main.dart';
+import 'package:panic_link/otp_phone.dart';
 import 'package:panic_link/scan_device.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_database/firebase_database.dart';
 
 class CompleteProfile extends StatefulWidget {
-    final String userId;
+  final String userId;
 
-    CompleteProfile({required this.userId});
-    static const String routeName = '/completeProfile';
+  CompleteProfile({required this.userId});
+  static const String routeName = '/completeProfile';
 
-    @override
-    _CompleteProfileState createState() => _CompleteProfileState();
-    }
+  @override
+  _CompleteProfileState createState() => _CompleteProfileState();
+}
 
-    class _CompleteProfileState extends State<CompleteProfile> {
-    final _formKey = GlobalKey<FormState>();
+class _CompleteProfileState extends State<CompleteProfile> {
+  final _formKey = GlobalKey<FormState>();
 
-    final TextEditingController _firstNameController = TextEditingController();
-    final TextEditingController _lastNameController = TextEditingController();
-    final TextEditingController _idNumberController = TextEditingController();
-    final TextEditingController _telNumberController = TextEditingController();
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _idNumberController = TextEditingController();
+  final TextEditingController _telNumberController = TextEditingController();
 
-    late DatabaseReference databaseReference;
+  late DatabaseReference databaseReference;
 
-    PhoneNumber number = PhoneNumber(isoCode: 'TR');
-    String initialCountry = 'TR';
+  PhoneNumber number = PhoneNumber(isoCode: 'TR');
+  String initialCountry = 'TR';
 
-    late ImagePicker picker = ImagePicker();
-    File? _imageFile;
+  late ImagePicker picker = ImagePicker();
+  File? _imageFile;
 
-    @override
-    void dispose() {
+  @override
+  void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _idNumberController.dispose();
     _telNumberController.dispose();
     super.dispose();
-    }
+  }
 
-    @override
-    void initState() {
+  @override
+  void initState() {
     super.initState();
     // +90 Türkiye kodu ile başlat
     _telNumberController.text = '+90';
@@ -53,54 +56,59 @@ class CompleteProfile extends StatefulWidget {
         .reference()
         .child("users")
         .child(widget.userId);
-//KİŞİLER VE C,HAZ İÇİN BUNUN GİBİ REF NOK EKLEME VE UPDATE YAPACAKSIN
-    }
 
-    //resim _imagefile değişk atanıyor
-    Future<void> _pickImage(ImageSource source) async {
+    // TextField değişikliklerini dinleyin ve +90 ifadesini sabit tutun
+    _telNumberController.addListener(() {
+      if (!_telNumberController.text.startsWith('+90')) {
+        _telNumberController.text = '+90';
+        _telNumberController.selection = TextSelection.fromPosition(
+            TextPosition(offset: _telNumberController.text.length));
+      }
+    });
+  }
+
+  //resim _imagefile değişk atanıyor
+  Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await picker.pickImage(source: source);
     setState(() {
-    if (pickedFile != null) {
-    _imageFile = File(pickedFile.path);
-    }
+      if (pickedFile != null) {
+        _imageFile = File(pickedFile.path);
+      }
     });
-    }
+  }
 
-    void _updateProfile() async {
+  void _updateProfile() async {
     try {
-    String? downloadUrl;
+      String? downloadUrl;
 
-    // Profil resmi eklenmişse yükle
-    if (_imageFile != null) {
-    // Benzersiz bir dosya adı oluştur
-    final String fileName = '${widget.userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-    final storageReference = FirebaseStorage.instance
-        .ref()
-        .child('profile_images')
-        .child(fileName);
+      if (_imageFile != null) {
+        final String fileName =
+            '${widget.userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final storageReference = FirebaseStorage.instance
+            .ref()
+            .child('profile_images')
+            .child(fileName);
 
-    // Resmi Firebase Storage'a yükle
-    final uploadTask = storageReference.putFile(_imageFile!);
-    downloadUrl = await (await uploadTask).ref.getDownloadURL();
-    }
+        final uploadTask = storageReference.putFile(File(_imageFile!.path));
+        final snapshot = await uploadTask.whenComplete(() => null);
+        downloadUrl = await snapshot.ref.getDownloadURL();
+      }
 
-    // Kullanıcı verilerini güncelle
-    DatabaseReference userRef = FirebaseDatabase.instance.ref().child('users').child(widget.userId);
-    Map<String, dynamic> userData = {
-      'userId': widget.userId,
-      'email': FirebaseAuth.instance.currentUser!.email, // Mevcut kullanıcının e-posta adresi
-      'name': _firstNameController.text.trim(),
-      'surname': _lastNameController.text.trim(),
-      'identityNumber': _idNumberController.text.trim(),
-      'phone': _telNumberController.text.trim(),
-      'profileImageUrl': downloadUrl ?? '', // Eğer downloadUrl null ise boş string atanır
-      'contacts': '', // İletişim bilgileri gibi diğer bilgileri ekleyebilirsiniz
-      'deviceId': '', // Cihaz ID gibi diğer bilgileri ekleyebilirsiniz
-      'helpCalls': '', // Yardım çağrıları gibi diğer bilgileri ekleyebilirsiniz
-    };
+      DatabaseReference userRef =
+          FirebaseDatabase.instance.ref().child('users').child(widget.userId);
+      Map<String, dynamic> userData = {
+        'userId': widget.userId,
+        'email': FirebaseAuth.instance.currentUser!.email,
+        'name': _firstNameController.text.trim(),
+        'surname': _lastNameController.text.trim(),
+        'identityNumber': _idNumberController.text.trim(),
+        'phone': _telNumberController.text.trim(),
+        'profileImageUrl': downloadUrl ?? '',
+        'contacts': '',
+        'deviceId': '',
+        'helpCalls': '',
+      };
 
-
-      // Profil resmi eklenmişse URL'yi ekle
       if (downloadUrl != null) {
         userData['profileImageUrl'] = downloadUrl;
       }
@@ -113,7 +121,11 @@ class CompleteProfile extends StatefulWidget {
         ),
       );
 
-      Navigator.pushNamed(context, LoginPage.routeName);
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage()),
+        (Route<dynamic> route) => false,
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -122,6 +134,44 @@ class CompleteProfile extends StatefulWidget {
       );
     }
   }
+
+  Future<void> _verifyPhoneNumber() async {
+    try {
+      await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: _telNumberController.text.trim(),
+        verificationCompleted: (phoneAuthCredential) {},
+        verificationFailed: (error) {
+          log(error.toString());
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Telefon numarası doğrulama başarısız.1"),
+            ),
+          );
+        },
+        codeSent: (verificationId, forceResendingToken) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => OTPScreen(
+                verificationId: verificationId,
+                onVerified: _updateProfile,
+              ),
+            ),
+          );
+        },
+        codeAutoRetrievalTimeout: (verificationId) {
+          log("Auto retrieval timeout");
+        },
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Telefon numarası doğrulama başarısız.2"),
+        ),
+      );
+    }
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -242,14 +292,14 @@ class CompleteProfile extends StatefulWidget {
                 ),
                 SizedBox(height: 16),
                 TextFormField(
+                  maxLength: 13,
                   controller: _telNumberController,
                   decoration: InputDecoration(labelText: 'Telefon Numarası'),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Lütfen telefon numaranızı giriniz';
                     }
-                    if (!RegExp(r'^(?:[+90][1-9])?[0-9]{10,12}$')
-                        .hasMatch(value)) {
+                    if (!RegExp(r'^\+90[0-9]{10}$').hasMatch(value)) {
                       return 'Telefon Numarası Geçersiz';
                     }
                     return null;
@@ -271,7 +321,7 @@ class CompleteProfile extends StatefulWidget {
                     onPressed: () {
                       if (_formKey.currentState?.validate() ?? false) {
                         // Form geçerli, işlemleri yapabilirsiniz
-                        _updateProfile();
+                        _verifyPhoneNumber();
                       }
                     },
                     child: Text('Gönder'),
