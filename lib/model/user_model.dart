@@ -1,18 +1,19 @@
 import 'package:panic_link/model/contact_model.dart';
-import 'package:panic_link/HelpCall.dart';
+import 'package:panic_link/model/help_request_model.dart';
+import 'package:panic_link/model/device_model.dart';
 
 class UserModel {
   String userId;
-  String? name; // Null olabilir
-  String? surname; // Null olabilir
-  String? email; // Null olabilir
-  String? password; // Null olabilir
-  String? identityNumber; // Null olabilir
-  String? phone; // Null olabilir
-  String? profileImageUrl; // Null olabilir
-  List<Contact>? contacts; // Opsiyonel alan, null olabilir
-  String? deviceId; // Null olabilir
-  List<HelpCall>? helpCalls; // Opsiyonel alan, null olabilir
+  String? name;
+  String? surname;
+  String? email;
+  String? password;
+  String? identityNumber;
+  String? phone;
+  String? profileImageUrl;
+  List<Contact>? contacts;
+  Device? device;
+  List<HelpCall>? helpCalls;
 
   UserModel({
     required this.userId,
@@ -24,11 +25,10 @@ class UserModel {
     this.phone,
     this.profileImageUrl,
     List<Contact>? contacts,
-    this.deviceId,
-    List<HelpCall>? helpCalls, // Liste olarak parametre olarak alındı
-  })  : contacts = contacts ?? [], // Boş liste olarak başlatıldı
-        helpCalls = helpCalls ?? []; // Boş liste olarak başlatıldı
-
+    this.device,
+    List<HelpCall>? helpCalls,
+  })  : contacts = contacts ?? [],
+        helpCalls = helpCalls ?? [];
 
   factory UserModel.fromMap(Map<String, dynamic> data) {
     return UserModel(
@@ -41,7 +41,7 @@ class UserModel {
       phone: data['phone'],
       profileImageUrl: data['profileImageUrl'],
       contacts: _parseContacts(data['contacts']),
-      deviceId: data['deviceId'],
+      device: _parseDevice(data['device']), // _parseDevice metodu kullanılıyor
       helpCalls: _parseHelpCalls(data['helpCalls']),
     );
   }
@@ -57,23 +57,36 @@ class UserModel {
       'phone': phone,
       'profileImageUrl': profileImageUrl,
       'contacts': contacts?.map((x) => x.toMap()).toList(),
-      'deviceId': deviceId,
+      'device': device?.toMap(),
       'helpCalls': helpCalls?.map((x) => x.toMap()).toList(),
     };
   }
 
   static List<Contact>? _parseContacts(dynamic contactsData) {
     if (contactsData == null) return null;
-    if (contactsData is List && contactsData.isNotEmpty) {
-      return contactsData.map((e) => Contact.fromMap(e)).toList();
+    if (contactsData is List) {
+      return contactsData.map((e) => Contact.fromMap(Map<String, dynamic>.from(e))).toList();
     }
     return [];
   }
 
+  static Device? _parseDevice(dynamic deviceData) {
+    if (deviceData == null) return null;
+
+    // Eğer gelen veri Map türündeyse, bunu Map<String, dynamic> türüne dönüştür
+    if (deviceData is Map) {
+      return Device.fromMap(Map<String, dynamic>.from(deviceData));
+    } else {
+      // Eğer gelen veri Map değilse, bu durumda veriyi işleyemeyiz, null döndür
+      return null;
+    }
+  }
+
+
   static List<HelpCall>? _parseHelpCalls(dynamic helpCallsData) {
     if (helpCallsData == null) return null;
-    if (helpCallsData is List && helpCallsData.isNotEmpty) {
-      return helpCallsData.map((e) => HelpCall.fromMap(e)).toList();
+    if (helpCallsData is List) {
+      return helpCallsData.map((e) => HelpCall.fromMap(Map<String, dynamic>.from(e))).toList();
     }
     return [];
   }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:panic_link/complete_profile.dart';
-import 'package:panic_link/login_page.dart';  // Oturum açma sayfası
-import 'package:panic_link/verificationEmail.dart';
+import 'package:panic_link/auth/complete_profile.dart';
+import 'package:panic_link/auth/login_page.dart';  // Oturum açma sayfası
+import 'package:panic_link/auth/verificationEmail.dart';
 
 class Wrapper extends StatelessWidget {
   const Wrapper({Key? key});

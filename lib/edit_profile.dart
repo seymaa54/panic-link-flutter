@@ -37,7 +37,6 @@ class _EditProfileState extends State<EditProfile> {
   late User? _currentUser;
   late DatabaseReference databaseReference;
 
-
   void _pickImage(ImageSource source) async {
     final pickedImage = await picker.pickImage(source: source);
     setState(() {
@@ -47,6 +46,7 @@ class _EditProfileState extends State<EditProfile> {
       }
     });
   }
+
   FocusNode _nameFocusNode = FocusNode();
   FocusNode _surnameFocusNode = FocusNode();
 
@@ -115,6 +115,7 @@ class _EditProfileState extends State<EditProfile> {
       return 'Fotoğraf Ekle';
     }
   }
+
 //GUNCELLEM SORUNLUU
   Future<void> _reauthenticateUser(String password) async {
     try {
@@ -140,7 +141,8 @@ class _EditProfileState extends State<EditProfile> {
       String? downloadUrl;
 
       if (_imageFile != null) {
-        final String fileName = '${widget.user!.userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final String fileName =
+            '${widget.user!.userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
         final storageReference = FirebaseStorage.instance
             .ref()
             .child('profile_images')
@@ -151,12 +153,14 @@ class _EditProfileState extends State<EditProfile> {
       }
 
       // Kullanıcı verilerini güncelle
-      DatabaseReference userRef = FirebaseDatabase.instance.ref().child('users').child(widget.user!.userId);
+      DatabaseReference userRef = FirebaseDatabase.instance
+          .ref()
+          .child('users')
+          .child(widget.user!.userId);
 
       Map<String, dynamic> userData = {
         'name': _nameController.text.trim(),
         'surname': _surnameController.text.trim(),
-        'email': _emailController.text.trim(),
         'phone': _phoneController.text.trim(),
         'profileImageUrl': downloadUrl ?? _profileImageUrl,
       };
@@ -167,74 +171,82 @@ class _EditProfileState extends State<EditProfile> {
 
       await userRef.update(userData);
 
-      // Firebase Authentication'da e-posta güncelleme
-      if (_currentUser != null) {
-        // Kullanıcıyı yeniden kimlik doğrulama
-        await _reauthenticateUser(password);
+      if (mounted) {
+        // SnackBar'ı göster
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Değişiklikler başarıyla kaydedildi."),
+            duration: Duration(seconds: 1),
+          ),
+        );
 
-        // E-posta adresini güncelle
-        await _currentUser!.updateEmail(_emailController.text.trim());
+        // 2 saniye bekleyin, sonra sayfayı kapatın
+        Future.delayed(Duration(seconds: 2), () {
+          if (mounted) {
+            Navigator.pop(context);
+          }
+        });
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Değişiklikler başarıyla kaydedildi."),
-        ),
-      );
-
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Değişiklikler kaydedilirken bir hata oluştu: $e"),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Değişiklikler kaydedilirken bir hata oluştu: $e"),
+          ),
+        );
+      }
     }
   }
 
   Widget build(BuildContext context) {
+    backgroundColor: Color(0xFFEEF1F5);
     return Scaffold(
-        key: scaffoldKey,
+      key: scaffoldKey,
+      backgroundColor: Colors.grey[200],
+      appBar: AppBar(
         backgroundColor: Colors.grey[200],
-        appBar: AppBar(
-          backgroundColor: Colors.grey[200],
-          automaticallyImplyLeading: false,
-          leading: InkWell(
-            onTap: () async {
-              Navigator.of(context).pop();
-            },
-            child: Icon(
-              Icons.chevron_left_rounded,
-              color: Colors.grey[600],
-              size: 32,
-            ),
+        automaticallyImplyLeading: false,
+        leading: InkWell(
+          onTap: () async {
+            Navigator.of(context).pop();
+          },
+          child: Icon(
+            Icons.chevron_left_rounded,
+            color: Colors.grey[600],
+            size: 32,
           ),
-          title: Text(
-            'Profili Düzenle',
-            style: TextStyle(
-                fontSize: 20,
-                fontFamily: 'Lexend',
-                letterSpacing: 0,
-                color: Colors.black54),
-          ),
-          actions: [],
-          centerTitle: false,
-          elevation: 0,
         ),
-        body: Container(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
-            child: SingleChildScrollView(
-              child: Column(mainAxisSize: MainAxisSize.max, children: [
+        title: Text(
+          'Profili Düzenle',
+          style: TextStyle(
+              fontSize: 20,
+              fontFamily: 'Lexend',
+              letterSpacing: 0,
+              color: Colors.black54),
+        ),
+        actions: [],
+        centerTitle: false,
+        elevation: 0,
+      ),
+      body: Center(
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.9,
+          height: MediaQuery.of(context).size.height,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
                 Padding(
                   padding: EdgeInsets.all(2),
                   child: Container(
-                    // Kullanıcı profil resmi gösterme alanı
                     child: _imageFile != null
                         ? ClipOval(
                       child: Image.file(
                         File(_imageFile!.path),
-                        height: 100,
-                        width: 100,
+                        height: 80, // Resim boyutunu küçülttük
+                        width: 80,
                         fit: BoxFit.cover,
                       ),
                     )
@@ -242,8 +254,8 @@ class _EditProfileState extends State<EditProfile> {
                         ? ClipOval(
                       child: Image.network(
                         _profileImageUrl!,
-                        height: 100,
-                        width: 100,
+                        height: 80, // Resim boyutunu küçülttük
+                        width: 80,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
                             Icon(Icons.error),
@@ -252,15 +264,15 @@ class _EditProfileState extends State<EditProfile> {
                         : ClipOval(
                       child: Image.asset(
                         'assets/images/user.png',
-                        height: 100,
-                        width: 100,
+                        height: 80, // Resim boyutunu küçülttük
+                        width: 80,
                         fit: BoxFit.cover,
                       ),
                     )),
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.fromLTRB(0, 16, 0, 0),
+                  padding: EdgeInsets.fromLTRB(0, 8, 0, 0), // Yukarıdan padding'i azaltalım
                   child: ElevatedButton(
                     onPressed: () {
                       showDialog(
@@ -278,7 +290,7 @@ class _EditProfileState extends State<EditProfile> {
                                       Navigator.of(context).pop();
                                     },
                                   ),
-                                  Padding(padding: EdgeInsets.all(8.0)),
+                                  Padding(padding: EdgeInsets.all(4.0)), // Padding'i azalttık
                                   GestureDetector(
                                     child: Text("Kameradan Çek"),
                                     onTap: () {
@@ -302,6 +314,7 @@ class _EditProfileState extends State<EditProfile> {
                       ),
                     ),
                     style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all(Colors.white30), // Renk ayarlaması
                       textStyle: MaterialStateProperty.all(
                         TextStyle(
                           fontSize: 14,
@@ -313,7 +326,7 @@ class _EditProfileState extends State<EditProfile> {
                       side: MaterialStateProperty.all(
                         BorderSide(
                           color: Colors.grey[600]!,
-                          width: 2,
+                          width: 1, // Border genişliğini azalttık
                         ),
                       ),
                       shape: MaterialStateProperty.all(
@@ -325,15 +338,15 @@ class _EditProfileState extends State<EditProfile> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 10.0), // Padding'i azalttık
                   child: Form(
                     key: _formKey,
                     autovalidateMode: AutovalidateMode.disabled,
                     child: Column(
-                      mainAxisSize: MainAxisSize.max,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Padding(
-                          padding: EdgeInsets.only(top: 20),
+                          padding: EdgeInsets.only(top: 10), // Padding'i azalttık
                           child: TextFormField(
                             controller: _nameController,
                             decoration: InputDecoration(
@@ -342,8 +355,8 @@ class _EditProfileState extends State<EditProfile> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               filled: true,
-                              fillColor: Colors.grey[200],
-                              contentPadding: EdgeInsets.all(20),
+                              fillColor: Colors.white30,
+                              contentPadding: EdgeInsets.all(15), // Padding'i azalttık
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -353,8 +366,9 @@ class _EditProfileState extends State<EditProfile> {
                             },
                           ),
                         ),
+                        SizedBox(height: 8,),
                         Padding(
-                          padding: EdgeInsets.only(top: 20),
+                          padding: EdgeInsets.only(top: 10), // Padding'i azalttık
                           child: TextFormField(
                             controller: _surnameController,
                             decoration: InputDecoration(
@@ -363,19 +377,20 @@ class _EditProfileState extends State<EditProfile> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               filled: true,
-                              fillColor: Colors.grey[200],
-                              contentPadding: EdgeInsets.all(20),
+                              fillColor: Colors.white30,
+                              contentPadding: EdgeInsets.all(15), // Padding'i azalttık
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Lütfen adınızı giriniz';
+                                return 'Lütfen soyadınızı giriniz';
                               }
                               return null;
                             },
                           ),
                         ),
+                        SizedBox(height: 8,),
                         Padding(
-                          padding: EdgeInsets.only(top: 20),
+                          padding: EdgeInsets.only(top: 10), // Padding'i azalttık
                           child: TextFormField(
                             controller: _phoneController,
                             decoration: InputDecoration(
@@ -384,8 +399,8 @@ class _EditProfileState extends State<EditProfile> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               filled: true,
-                              fillColor: Colors.grey[200],
-                              contentPadding: EdgeInsets.all(20),
+                              fillColor: Colors.white30,
+                              contentPadding: EdgeInsets.all(15), // Padding'i azalttık
                             ),
                             keyboardType: TextInputType.phone,
                             inputFormatters: [
@@ -416,8 +431,10 @@ class _EditProfileState extends State<EditProfile> {
                             },
                           ),
                         ),
-                        Padding(
-                          padding: EdgeInsets.only(top: 20),
+                        SizedBox(height: 8,),
+
+                       /* Padding(
+                          padding: EdgeInsets.only(top: 10), // Padding'i azalttık
                           child: TextFormField(
                             controller: _emailController,
                             decoration: InputDecoration(
@@ -426,25 +443,26 @@ class _EditProfileState extends State<EditProfile> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               filled: true,
-                              fillColor: Colors.grey[200],
-                              contentPadding: EdgeInsets.all(20),
+                              fillColor: Colors.white30,
+                              contentPadding: EdgeInsets.all(15), // Padding'i azalttık
                             ),
                             validator: validateEmail,
                           ),
-                        ),
+                        ),*/
                         Padding(
-                          padding: EdgeInsets.only(top: 30),
+                          padding: EdgeInsets.only(top: 20), // Padding'i azalttık
                           child: ElevatedButton(
                             onPressed: () {
                               if (_formKey.currentState!.validate()) {
-                                _updateUserProfile(widget.user!.password.toString());
+                                _updateUserProfile(
+                                    widget.user!.password.toString());
                               }
                             },
-                            child: Text('Değişiklikleri Kaydet'),
+                            child: Text('Değişiklikleri Kaydet',style: TextStyle(fontSize: 18),),
                             style: ElevatedButton.styleFrom(
                               foregroundColor: Colors.white,
                               backgroundColor: Colors.blue,
-                              minimumSize: const Size(252, 50),
+                              minimumSize: const Size(200, 40), // Buton boyutunu küçülttük
                               padding: EdgeInsets.zero,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(30),
@@ -457,7 +475,11 @@ class _EditProfileState extends State<EditProfile> {
                     ),
                   ),
                 ),
-              ]),
-            )));
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

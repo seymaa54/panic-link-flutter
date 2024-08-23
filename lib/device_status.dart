@@ -15,6 +15,8 @@ class _DeviceStatusState extends State<DeviceStatus> {
 
   @override
   Widget build(BuildContext context) {
+    backgroundColor: Color(0xFFEEF1F5);
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Cihaz Kontrolleri'),

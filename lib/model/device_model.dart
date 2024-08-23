@@ -1,22 +1,36 @@
-class DeviceModel {
-  String deviceId;
-  String deviceName;
-  String userId; // Kullanıcı ID'sini saklamak için
-  String pinCode;
+class Device {
+  String? deviceId;  // Bu alan, Firebase tarafından otomatik olarak verilen ID'yi tutar
+  String? deviceName;
+  bool isConnected;
+  String? pinCode;
 
-  DeviceModel({
-    required this.deviceId,
-    required this.deviceName,
-    required this.userId,
-    required this.pinCode,
+  Device({
+    this.deviceId,
+    this.deviceName,
+    this.pinCode,
+    this.isConnected = false,
   });
 
-  factory DeviceModel.fromMap(Map<String, dynamic> data) {
-    return DeviceModel(
-      deviceId: data['deviceId'],
-      deviceName: data['deviceName'],
-      userId: data['userId'],
-      pinCode: data['pinCode'],
+  Device copyWith({
+    String? deviceId,
+    String? deviceName,
+    bool? isConnected,
+    String? pinCode,
+  }) {
+    return Device(
+      deviceId: deviceId ?? this.deviceId,
+      deviceName: deviceName ?? this.deviceName,
+      isConnected: isConnected ?? this.isConnected,
+      pinCode: pinCode ?? this.pinCode,
+    );
+  }
+
+  factory Device.fromMap(Map<String, dynamic> map) {
+    return Device(
+      deviceId: map['deviceId'],
+      deviceName: map['deviceName'],
+      pinCode: map['pinCode'],
+      isConnected: map['isConnected'] ?? false,
     );
   }
 
@@ -24,8 +38,8 @@ class DeviceModel {
     return {
       'deviceId': deviceId,
       'deviceName': deviceName,
-      'userId': userId,
       'pinCode': pinCode,
+      'isConnected': isConnected,
     };
   }
 }

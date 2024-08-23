@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:panic_link/provider/user_provider.dart';
 
 class ForgotPassword extends StatefulWidget {
   static const String routeName = '/forgotPassword';
@@ -12,6 +13,7 @@ class ForgotPasswordState extends State<ForgotPassword> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController emailAddressTextController = TextEditingController();
   final FocusNode emailAddressFocusNode = FocusNode();
+  final _auth = UserProvider();
 
   String? validateEmail(String? value) {
     if (value == null || value.isEmpty) {
@@ -26,6 +28,29 @@ class ForgotPasswordState extends State<ForgotPassword> {
     return null;
   }
 
+  Future<void> sendPasswordResetLink() async {
+    try {
+      await _auth.sendPasswordResetEmail(email:emailAddressTextController.text);
+
+      // Eğer başarılıysa, bir mesaj göster ve login sayfasına yönlendir
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.'),
+        ),
+      );
+
+      // Login sayfasına yönlendirme
+      Navigator.of(context).pushReplacementNamed('/loginPage');
+    } catch (e) {
+      // Hata durumunda kullanıcıya mesaj göster
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Şifre sıfırlama bağlantısı gönderilirken bir hata oluştu.'),
+        ),
+      );
+    }
+  }
+
   @override
   void dispose() {
     emailAddressTextController.dispose();
@@ -37,9 +62,9 @@ class ForgotPasswordState extends State<ForgotPassword> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: scaffoldKey,
-      backgroundColor: Colors.white,
+      backgroundColor: Color(0xFFEEF1F5),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Color(0xFFEEF1F5),
         automaticallyImplyLeading: false,
         leading: InkWell(
           onTap: () {
@@ -52,7 +77,7 @@ class ForgotPasswordState extends State<ForgotPassword> {
           ),
         ),
         title: const Text(
-          'Şifre değiştir',
+          '',
           style: TextStyle(
             fontFamily: 'Lexend',
             fontSize: 24,
@@ -69,13 +94,13 @@ class ForgotPasswordState extends State<ForgotPassword> {
               mainAxisSize: MainAxisSize.max,
               children: [
                 const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  padding: EdgeInsets.symmetric(horizontal: 20,vertical: 20),
                   child: Row(
                     mainAxisSize: MainAxisSize.max,
                     children: [
                       Expanded(
                         child: Text(
-                          'Hesabınızla ilişkili e-postayı girin. Size bir doğrulama kodu göndereceğiz.',
+                          'Hesabınızla ilişkili e-postayı girin. Size bir şifre sıfırlama bağlantısı göndereceğiz.',
                           style: TextStyle(
                             color: Colors.black45,
                             fontFamily: 'Lexend',
@@ -88,18 +113,46 @@ class ForgotPasswordState extends State<ForgotPassword> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
                   child: TextFormField(
                     controller: emailAddressTextController,
                     focusNode: emailAddressFocusNode,
+                    obscureText: false,
                     decoration: InputDecoration(
-                      labelText: 'E-posta',
-                      border: OutlineInputBorder(
+                      labelText: 'E-posta Adresi',
+                      hintText: 'E-postanızı giriniz...',
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color(0x00000000),
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color(0x00000000),
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color(0x00000000),
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color(0x00000000),
+                          width: 1,
+                        ),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       filled: true,
-                      fillColor: Colors.grey[200],
-                      contentPadding: const EdgeInsets.all(20),
+                      fillColor: Color(0xFFF5F5F5),
+                      contentPadding: EdgeInsetsDirectional.fromSTEB(10, 20, 10, 16),
                     ),
                     validator: validateEmail,
                   ),
@@ -107,9 +160,14 @@ class ForgotPasswordState extends State<ForgotPassword> {
                 Padding(
                   padding: const EdgeInsets.only(top: 24),
                   child: ElevatedButton(
-                    onPressed: () {
-                      // Add your functionality here
-                      print('Button-Login pressed ...');
+                    onPressed: () async {
+                      if (validateEmail(emailAddressTextController.text) == null) {
+                        await sendPasswordResetLink();
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Geçerli bir e-posta adresi giriniz.')),
+                        );
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       foregroundColor: Colors.white,

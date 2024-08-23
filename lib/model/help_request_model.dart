@@ -1,9 +1,9 @@
 class HelpCall {
-  String callId;
+  String? callId;
   DateTime timestamp;
 
   HelpCall({
-    required this.callId,
+    this.callId,
     required this.timestamp,
   });
 

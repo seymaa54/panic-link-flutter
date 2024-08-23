@@ -6,22 +6,31 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:panic_link/model/user_model.dart';
 import 'package:panic_link/model/device_model.dart';
 
-import '../model/contact_model.dart';
-import '../HelpCall.dart';
-
 /*
 ChangeNotifier sınıfından türediği için, bu sınıf içinde kullanıcı verilerini dinlemek
  ve güncellemek için gerekli mekanizmaları sağlayabilirsiniz.
  */
 class UserProvider with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  late DatabaseReference _userRef;
+  late DatabaseReference _userRef = FirebaseDatabase.instance.reference();
+
   UserModel? _userData;
-  DeviceModel? _deviceData;
+  Device? _deviceData;
+  User? _currentUser;
+  String _userId = '';
+
+  UserModel? get userData => _userData;
+  User? get currentUser => _currentUser;
+  String get userId => _userId;
+// currentUser getter'ı ekleniyor
+
+
 
   UserProvider() {
     // Firebase Authentication'dan gelen oturum durumu değişikliklerini dinlemek için bir dinleyici ekler.
     _auth.authStateChanges().listen((User? user) {
+      _currentUser = user; // currentUser'ı güncelle
+
       if (user != null) {
         // Firebase veritabanında, kullanıcının UID'sini kullanarak kullanıcı düğümüne (node) referans alınır.
         _userRef = FirebaseDatabase.instance
@@ -49,9 +58,8 @@ class UserProvider with ChangeNotifier {
       }
     });
   }
-  UserModel? get userData => _userData;
 
-  DeviceModel? get deviceData => _deviceData;
+  Device? get deviceData => _deviceData;
 
   /*Future<void> registerUser(String email, String password, String name,
       String surname,String identityNumber, String phone) async {
@@ -88,6 +96,9 @@ class UserProvider with ChangeNotifier {
       print(e.toString());
     }
   }
+  Future<void> sendPasswordResetEmail({required String email}) async {
+    await _auth.sendPasswordResetEmail(email: email);
+  }
 
   Future<void> getUserDataAfterSignIn(String email, String password) async {
     try {
@@ -108,14 +119,14 @@ class UserProvider with ChangeNotifier {
          Eğer veri varsa, UserModel.fromMap metodunu kullanarak snapshot.value'yi UserModel nesnesine dönüştürürüz.
          */
           _userRef.once().then((DataSnapshot snapshot) {
-                if (snapshot.value != null) {
-                  _userData = UserModel.fromMap(Map<String, dynamic>.from(
-                      snapshot.value as Map<String, dynamic>));
-                  notifyListeners();
-                } else {
-                  print("Kullanıcı verileri bulunamadı.");
-                }
-              } as FutureOr Function(DatabaseEvent value));
+            if (snapshot.value != null) {
+              _userData = UserModel.fromMap(Map<String, dynamic>.from(
+                  snapshot.value as Map<String, dynamic>));
+              notifyListeners();
+            } else {
+              print("Kullanıcı verileri bulunamadı.");
+            }
+          } as FutureOr Function(DatabaseEvent value));
         }
       });
     } catch (e) {
@@ -188,7 +199,7 @@ class UserProvider with ChangeNotifier {
   }
 
   //bu kısımda olmuyor
-  void updateUserData(Map<String, dynamic> newData) {
+  void updateUser(Map<String, dynamic> newData) {
     if (_userData != null) {
       _userData!.name = newData['name'] ?? _userData!.name;
       _userData!.surname = newData['surname'] ?? _userData!.surname;
@@ -203,51 +214,50 @@ class UserProvider with ChangeNotifier {
     }
   }
 
-  Future<void> deleteUser() async {
-    await _userRef.remove();
-    // Kullanıcı verilerini yerel olarak da temizle
-    _userData = null;
-    _deviceData = null; // Cihaz verilerini temizle
-    notifyListeners();
-    //update den sonra fetch user datauyı çağıarbilrisn
-  }
-
-  void addDevice(DeviceModel device) {
-    if (_userData!.deviceId == null) {
-      final deviceRef =
-          FirebaseDatabase.instance.reference().child('devices').push();
-      deviceRef.set(device.toMap()).then((_) {
-        _userData!.deviceId =
-            deviceRef.key; // Yeni cihazın ID'sini kullanıcıya atayın
-        _userRef.update({'deviceId': _userData!.deviceId});
-        notifyListeners();
-      });
-    } else {
-      print('Kullanıcı zaten bir cihaza sahip.');
-    }
-  }
-
-  void _fetchDevices() async {
-    if (_userData != null && _userData!.deviceId != null) {
-      final deviceRef = FirebaseDatabase.instance
-          .reference()
-          .child('devices')
-          .child(_userData!.deviceId!);
-      DataSnapshot snapshot = (await deviceRef.once()) as DataSnapshot;
-      // Check for null value before processing
-      if (snapshot.value != null) {
-        _deviceData =
-            DeviceModel.fromMap(snapshot.value as Map<String, dynamic>);
-        notifyListeners();
+  Future<void> getCurrentUser() async {
+    User? currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      try {
+        DataSnapshot dataSnapshot = await _userRef.child('users').child(currentUser.uid).get();
+        dynamic data = dataSnapshot.value;
+        if (data != null) {
+          _userData = UserModel.fromMap(data);
+          notifyListeners(); // Değişikliği dinleyen widget'ları bilgilendirir
+        }
+      } catch (error) {
+        print('Kullanıcı bilgileri alınırken hata oluştu: $error');
       }
+    } else {
+      print('Kullanıcı null');
     }
   }
-/* void addHelpCall(HelpCall helpCall) {
-      _userData!.helpCalls.add(helpCall);
-      _userRef.child('helpCalls').push().set(helpCall.toMap());
-      notifyListeners();
+
+  Future<bool> validateCurrentPassword(String currentPassword) async {
+    // Burada mevcut şifreyi doğrulama işlemi yapılmalı
+    // Örneğin Firebase kullanıyorsan:
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      final authCredentials = EmailAuthProvider.credential(
+        email: user!.email!,
+        password: currentPassword,
+      );
+      var authResult = await user.reauthenticateWithCredential(authCredentials);
+      return authResult.user != null;
+    } catch (e) {
+      return false;
     }
-    List<HelpCall> getHelpCalls() {
-      return _userData!.helpCalls;
-    }*/
+  }
+
+  // Yeni şifreyi güncelleme metodu
+  Future<bool> updateUserPassword(String newPassword) async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      await user!.updatePassword(newPassword);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+
 }

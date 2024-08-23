@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_blue/flutter_blue.dart';
+//import 'package:flutter_blue/flutter_blue.dart';
 import 'package:get/get.dart';
 import 'package:panic_link/ble_controller.dart';
 
@@ -31,7 +31,7 @@ class _ConnectDeviceState extends State<ConnectDevice> {
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
+                  /*children: [
                     StreamBuilder<List<ScanResult>>(
                         stream: controller.scanResults,
                         builder: (context, snapshot) {
@@ -69,7 +69,7 @@ class _ConnectDeviceState extends State<ConnectDevice> {
                           // await controller.disconnectDevice();
                         },
                         child: Text("SCAN")),
-                  ],
+                  ],*/
                 ),
               );
             },

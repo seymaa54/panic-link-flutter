@@ -6,7 +6,7 @@ import 'package:panic_link/model/contact_model.dart';
 import 'package:panic_link/provider/contact_provider.dart';
 import 'package:provider/provider.dart';
 
-import 'home_page_alt.dart';
+import 'home_page.dart';
 import 'my_profile_page.dart'; // Assuming Contact model is imported
 
 class MyContacts extends StatefulWidget {
@@ -25,6 +25,7 @@ class _MyContactsState extends State<MyContacts> {
   User? _currentUser;
   late DatabaseReference _database;
   int _selectedIndex = 0;
+  bool _isAlertShown = false; // Flag to track if alert dialog is shown
 
   @override
   void initState() {
@@ -32,7 +33,58 @@ class _MyContactsState extends State<MyContacts> {
     _auth = FirebaseAuth.instance;
     _currentUser = _auth.currentUser;
     _database = FirebaseDatabase.instance.reference();
+    _checkContactsAndShowAlert();
     _loadContacts();
+  }
+
+  Future<void> _checkContactsAndShowAlert() async {
+    _currentUser = _auth.currentUser;
+    if (_currentUser != null) {
+      _database
+          .child('users')
+          .child(_currentUser!.uid)
+          .child('contacts')
+          .get()
+          .then((DataSnapshot dataSnapshot) {
+        dynamic data = dataSnapshot.value;
+        if (data != null && data.isNotEmpty) {
+          print("liste boş deil");
+        } else {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text('Kişi Listesi Boş'),
+                content: Text('Kişi eklemek için devam etmek istiyor musunuz?'),
+                actions: <Widget>[
+                  TextButton(
+                    child: Text('İptal'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      _isAlertShown = false;
+                    },
+                  ),
+                  TextButton(
+                    child: Text('Devam Et'),
+                    onPressed: () async {
+                      Navigator.of(context).pop(); // AlertDialog'u kapat
+                      _isAlertShown = false;
+                      final result = await Navigator.pushNamed(
+                          context, ContactForm.routeName);
+                      if (result == true) {
+                        _loadContacts(); // Yeni kişi eklendiyse verileri yeniden yükle
+                      }
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        }
+      });
+    }
+    _isAlertShown =
+        false; // Alert dialogunun açık olup olmadığını kontrol etmek için bir değişken
   }
 
   void _loadContacts() {
@@ -45,7 +97,8 @@ class _MyContactsState extends State<MyContacts> {
           .then((DataSnapshot dataSnapshot) {
         dynamic data = dataSnapshot.value;
 
-        print('mycontacts: Contacts Data: $data'); // Veriyi debug etmek için ekleyin
+        print(
+            'mycontacts: Contacts Data: $data'); // Veriyi debug etmek için ekleyin
 
         if (data != null && data.isNotEmpty) {
           setState(() {
@@ -60,10 +113,19 @@ class _MyContactsState extends State<MyContacts> {
           });
         }
 
-        print('Parsed Contacts: $_contacts'); // Kontakların işlenmiş halini debug için ekleyin
+        print(
+            'Parsed Contacts: $_contacts'); // Kontakların işlenmiş halini debug için ekleyin
       }).catchError((error) {
         print('Veriler alınırken hata oluştu: $error');
       });
+    }
+  }
+
+  void _onAddContact() async {
+    final result = await Navigator.pushNamed(context, ContactForm.routeName);
+
+    if (result == true) {
+      _loadContacts(); // Yeni kişi eklendiyse verileri yeniden yükle
     }
   }
 
@@ -175,9 +237,7 @@ class _MyContactsState extends State<MyContacts> {
             Padding(
               padding: EdgeInsetsDirectional.fromSTEB(0, 16, 12, 0),
               child: IconButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, ContactForm.routeName);
-                },
+                onPressed: _onAddContact,
                 icon: Icon(
                   Icons.add_circle_outline_rounded,
                   color: Colors.black38,

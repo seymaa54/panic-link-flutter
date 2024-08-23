@@ -1,10 +1,10 @@
-import 'package:flutter_blue/flutter_blue.dart';
+//import 'package:flutter_blue/flutter_blue.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class BleController extends GetxController{
 
-  FlutterBlue ble = FlutterBlue.instance;
+ /* FlutterBlue ble = FlutterBlue.instance;
 
 // This Function will help users to scan near by BLE devices and get the list of Bluetooth devices.
   Future scanDevices() async{
@@ -34,5 +34,5 @@ class BleController extends GetxController{
   }
 
   Stream<List<ScanResult>> get scanResults => ble.scanResults;
-
+*/
 }

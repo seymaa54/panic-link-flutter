@@ -2,7 +2,7 @@ import 'dart:developer';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:panic_link/home_page_alt.dart';
+import 'package:panic_link/home_page.dart';
 
 class OTPScreen extends StatefulWidget {
   const OTPScreen({Key? key, required this.verificationId, required this.onVerified}) : super(key: key);
@@ -26,7 +26,7 @@ class _OTPScreenState extends State<OTPScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
-              "We have sent an OTP to your phone. Please verify",
+              "Telefonunuza bir doğrulama kodu gönderdik. Lütfen doğrulayın",
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 18),
             ),
@@ -37,7 +37,7 @@ class _OTPScreenState extends State<OTPScreen> {
               decoration: InputDecoration(
                 fillColor: Colors.grey.withOpacity(0.25),
                 filled: true,
-                hintText: "Enter OTP",
+                hintText: "Doğrulama Kodunu Girin",
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
                   borderSide: BorderSide.none,
@@ -57,8 +57,9 @@ class _OTPScreenState extends State<OTPScreen> {
                   final cred = PhoneAuthProvider.credential(
                     verificationId: widget.verificationId,
                     smsCode: otpController.text,
-                  );
 
+                  );
+                  print(otpController.text);
                   await FirebaseAuth.instance.signInWithCredential(cred);
 
                   widget.onVerified();
@@ -70,13 +71,12 @@ class _OTPScreenState extends State<OTPScreen> {
                     ),
                   );
                 }
-
                 setState(() {
                   isLoading = false;
                 });
               },
               child: const Text(
-                "Verify",
+                "Doğrula",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
               ),
             ),

@@ -3,11 +3,11 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:panic_link/change_password.dart';
 import 'package:panic_link/edit_profile.dart';
-import 'package:panic_link/login_page.dart';
+import 'package:panic_link/auth/login_page.dart';
 import 'package:panic_link/privacyPolicy.dart';
 import 'package:panic_link/provider/user_provider.dart';
 import 'package:provider/provider.dart';
-import 'home_page_alt.dart';
+import 'home_page.dart';
 import 'model/user_model.dart';
 import 'my_contacts.dart';
 
@@ -46,6 +46,8 @@ class _MyProfilePageState extends State<MyProfilePage> with TickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    backgroundColor: Color(0xFFEEF1F5);// Hex kodunu burada kullanıyoruz
+
     return Scaffold(
         bottomNavigationBar: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
@@ -124,21 +126,33 @@ class _MyProfilePageState extends State<MyProfilePage> with TickerProviderStateM
                                 child: Container(
                                   width: 75,
                                   height: 75,
-                                  clipBehavior: Clip.antiAlias,
                                   decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
+                                    shape: BoxShape.circle, // Yuvarlak şekil
+                                    border: Border.all(
+                                      color: Colors.blue, // Mavi çerçeve rengi
+                                      width: 2.0, // Çerçeve kalınlığı
+                                    ),
                                   ),
-                                  child:userData != null && userData.profileImageUrl != null
-                                      ? Image.network(
-                                    userData.profileImageUrl!,
-                                    fit: BoxFit.cover,
-                                  )
-                                      : Image.asset(
-                                    'assets/images/user.png',
-                                    fit: BoxFit.cover,
+                                  child: ClipOval(
+                                    child: userData != null && userData.profileImageUrl != null
+                                        ? Image.network(
+                                      userData.profileImageUrl!,
+                                      fit: BoxFit.cover,
+                                      width: 75, // Resim boyutunu ayarlayın
+                                      height: 75,
+                                    )
+                                        : Image.asset(
+                                      'assets/images/user.png',
+                                      fit: BoxFit.cover,
+                                      width: 75, // Resim boyutunu ayarlayın
+                                      height: 75,
+                                    ),
                                   ),
                                 ),
-                              ),
+                              )
+
+
+
                             ),
                             Padding(
                               padding:

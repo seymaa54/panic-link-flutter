@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:panic_link/my_contacts.dart';
 import 'package:panic_link/provider/contact_provider.dart';
-
 import 'package:panic_link/model/contact_model.dart'; // Contact modelinizi buraya göre düzenleyin
 
 class ContactForm extends StatefulWidget {
@@ -42,6 +40,13 @@ class _ContactFormState extends State<ContactForm> {
       // +90 Türkiye kodu ile başlat
       _phoneController.text = '+90';
     }
+    _phoneController.addListener(() {
+      if (!_phoneController.text.startsWith('+90')) {
+        _phoneController.text = '+90';
+        _phoneController.selection = TextSelection.fromPosition(
+            TextPosition(offset: _phoneController.text.length));
+      }
+    });
   }
 
   @override
@@ -69,7 +74,7 @@ class _ContactFormState extends State<ContactForm> {
 
   //contactmodel kullanılarak newcontact nesensi oluşturulır.
   //bu nesne  contactproviderın addcontact metdouyla mecvut kulalnıcnun contact listesine firebasede kaydedilir
-  void _saveContact() async {
+  Future<void> _saveContact() async {
     if (_formKey.currentState!.validate()) {
       // Form geçerli, verileri alalım
       String firstName = _nameController.text.trim();
@@ -87,33 +92,32 @@ class _ContactFormState extends State<ContactForm> {
       );
 
       ContactProvider contactProvider = ContactProvider(_currentUser!.uid);
+
       // Eğer düzenleme modundayızsa, contactId'yi aktar
       if (widget.contact != null) {
         // updateContact metodunu çağır
-        await contactProvider.updateContact(_cId,newContact);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Kişi başarıyla eklendi')),
-
-        );
+        await contactProvider.updateContact(_cId, newContact);
       } else {
         // Yeni bir kişi ekleniyor, saveContact metodunu çağır
         await contactProvider.addContact(newContact);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Yeni kişi başarıyla eklendi')),
-
-        );
       }
+
       // İşlem tamamlandıktan sonra formu temizleyelim
       _nameController.clear();
       _surnameController.clear();
       _phoneController.clear();
       _emailController.clear();
 
-      // Kullanıcıya işlem başarılı mesajı verebilirsiniz
+      // İşlem tamamlandıktan sonra SnackBar göstermek için mounted kontrolü yapalım
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(widget.contact != null ? 'Kişi başarıyla güncellendi' : 'Yeni kişi başarıyla eklendi')),
+        );
+      }
 
+      // Formu kaydettikten sonra mevcut sayfayı kapatıp önceki sayfaya dön
+      Navigator.pop(context, true); // true, "My Contacts" sayfasında güncelleme yapmak için bir işarettir
     }
-    Navigator.pushNamed(
-        context, MyContacts.routeName);
   }
 
   @override
@@ -223,10 +227,9 @@ class _ContactFormState extends State<ContactForm> {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Lütfen telefon numaranızı giriniz';
+                                return 'Lütfen telefon numarası giriniz';
                               }
-                              if (!RegExp(r'^(?:[+90][1-9])?[0-9]{10,12}$')
-                                  .hasMatch(value)) {
+                              if (!RegExp(r'^\+90[0-9]{10}$').hasMatch(value)) {
                                 return 'Telefon Numarası Geçersiz';
                               }
                               return null;

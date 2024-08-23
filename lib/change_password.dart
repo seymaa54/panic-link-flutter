@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:panic_link/provider/user_provider.dart';
 
 class ChangePassword extends StatefulWidget {
   static const String routeName = '/changePassword';
@@ -9,38 +11,83 @@ class ChangePassword extends StatefulWidget {
 }
 
 class ChangePasswordState extends State<ChangePassword> {
-  final scaffoldKey = GlobalKey<ScaffoldState>();
-  final TextEditingController emailAddressTextController =
-      TextEditingController();
-  final FocusNode emailAddressFocusNode = FocusNode();
+  final TextEditingController currentPasswordController = TextEditingController();
+  final TextEditingController newPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
+
+  bool currentPasswordVisibility = false;
+  bool newPasswordVisibility = false;
+  bool confirmPasswordVisibility = false;
 
   @override
   void dispose() {
-    emailAddressTextController.dispose();
-    emailAddressFocusNode.dispose();
+    currentPasswordController.dispose();
+    newPasswordController.dispose();
+    confirmPasswordController.dispose();
     super.dispose();
   }
 
-  String? validateEmail(String? value) {
+  String? validatePassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Lütfen e-posta adresinizi girin';
+      return 'Lütfen şifrenizi girin';
     }
-    String pattern =
-        r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,253}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,253}[a-zA-Z0-9])?)*$";
-    RegExp regex = RegExp(pattern);
-    if (!regex.hasMatch(value)) {
-      return 'E-posta adresiniz hatalı';
+    if (value.length < 6) {
+      return 'Şifreniz en az 6 karakterden oluşmalıdır';
     }
     return null;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        key: scaffoldKey,
-        backgroundColor: Colors.white,
+  Future<void> _updatePassword() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+    final currentPassword = currentPasswordController.text;
+    final newPassword = newPasswordController.text;
+    final confirmPassword = confirmPasswordController.text;
+
+    // Şifrelerin doğrulanması
+    if (newPassword != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Yeni şifreler eşleşmiyor')),
+      );
+      return;
+    }
+
+    // Mevcut şifrenin doğrulanması
+    final isPasswordCorrect = await userProvider.validateCurrentPassword(
+        currentPassword);
+    if (!isPasswordCorrect) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mevcut şifre hatalı')),
+      );
+      return;
+    }
+
+
+    final success = await userProvider.updateUserPassword(newPassword);
+    if (mounted) {
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Şifre başarıyla güncellendi')),
+        );
+        Future.delayed(Duration(seconds: 1), () {
+          if (mounted) {
+            Navigator.pop(context); // 1 saniye sonra sayfayı kapat
+          }
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Şifre güncellenirken bir hata oluştu'),
+          ),
+        );
+      }
+    }
+  }
+    @override
+    Widget build(BuildContext context) {
+      return Scaffold(
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: Color(0xFFEEF1F5),
           automaticallyImplyLeading: false,
           leading: InkWell(
             onTap: () {
@@ -53,7 +100,7 @@ class ChangePasswordState extends State<ChangePassword> {
             ),
           ),
           title: const Text(
-            'Şifre değiştir',
+            'Şifre Değiştir',
             style: TextStyle(
               fontFamily: 'Lexend',
               fontSize: 24,
@@ -63,113 +110,208 @@ class ChangePasswordState extends State<ChangePassword> {
           centerTitle: false,
           elevation: 0,
         ),
-        body: Stack(children: [
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/login_bg@2x.png'),
-                fit: BoxFit.cover, // veya BoxFit.fitWidth, BoxFit.fitHeight
-              ),
-            ),
-          ),
-          Container(
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
             child: Column(
-              mainAxisSize: MainAxisSize.max,
               children: [
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.max,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Hesabınızla ilişkili e-postayı girin.',
-                          style: TextStyle(
-                            color: Colors.black45,
-                            fontFamily: 'Lexend',
-                            fontSize: 16,
-                            letterSpacing: 0,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+                SizedBox(
+                  width: 600,
+                  height: 60,
                   child: TextFormField(
-                    controller: emailAddressTextController,
-                    focusNode: emailAddressFocusNode,
-                    obscureText: false,
+                    controller: currentPasswordController,
+                    obscureText: !currentPasswordVisibility,
                     decoration: InputDecoration(
-                      labelText: 'E-posta Adresi',
-                      labelStyle: TextStyle(
-                        fontFamily: 'Lexend',
-                        fontSize: 16,
-                        letterSpacing: 0,
-                      ),
-                      hintText: 'E-postanızı giriniz...',
-                      hintStyle: TextStyle(
-                        fontFamily: 'Lexend',
-                        fontSize: 16,
-                        letterSpacing: 0,
-                      ),
+                      labelText: 'Mevcut Şifre',
+                      hintText: 'Mevcut şifrenizi giriniz...',
                       enabledBorder: OutlineInputBorder(
                         borderSide: BorderSide(
-                          color: Colors.black45,
+                          color: Color(0x00000000),
                           width: 1,
                         ),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderSide: BorderSide(
-                          color: Colors.blue,
-                          width: 2,
+                          color: Color(0x00000000),
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color(0x00000000),
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color(0x00000000),
+                          width: 1,
                         ),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       filled: true,
-                      fillColor: Colors.white,
-                      contentPadding:
-                          EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+                      fillColor: Color(0xFFF5F5F5),
+                      contentPadding: EdgeInsetsDirectional.fromSTEB(
+                          10, 20, 10, 16),
+                      suffixIcon: InkWell(
+                        onTap: () =>
+                            setState(
+                                  () =>
+                              currentPasswordVisibility =
+                              !currentPasswordVisibility,
+                            ),
+                        child: Icon(
+                          currentPasswordVisibility
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          size: 20,
+                        ),
+                      ),
                     ),
-                    style: TextStyle(
-                      fontFamily: 'Lexend',
-                      fontSize: 16,
-                      letterSpacing: 0,
-                    ),
-                    validator: validateEmail,
+                    validator: validatePassword,
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 24),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      print('Button-Login pressed ...');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: Colors.blue,
-                      minimumSize: const Size(252, 50),
-                      padding: EdgeInsets.zero,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: 600,
+                  height: 60,
+                  child: TextFormField(
+                    controller: newPasswordController,
+                    obscureText: !newPasswordVisibility,
+                    decoration: InputDecoration(
+                      labelText: 'Yeni Şifre',
+                      hintText: 'Yeni şifrenizi giriniz...',
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color(0x00000000),
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      elevation: 3,
-                    ),
-                    child: const Text(
-                      'Sıfırlama Bağlantısı Gönder',
-                      style: TextStyle(
-                        fontFamily: 'Lexend',
-                        fontSize: 16,
-                        letterSpacing: 0,
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color(0x00000000),
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color(0x00000000),
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color(0x00000000),
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      filled: true,
+                      fillColor: Color(0xFFF5F5F5),
+                      contentPadding: EdgeInsetsDirectional.fromSTEB(
+                          10, 20, 10, 16),
+                      suffixIcon: InkWell(
+                        onTap: () =>
+                            setState(
+                                  () =>
+                              newPasswordVisibility = !newPasswordVisibility,
+                            ),
+                        child: Icon(
+                          newPasswordVisibility
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          size: 20,
+                        ),
                       ),
                     ),
+                    validator: validatePassword,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: 500,
+                  height: 60,
+                  child: TextFormField(
+                    controller: confirmPasswordController,
+                    obscureText: !confirmPasswordVisibility,
+                    decoration: InputDecoration(
+                      labelText: 'Yeni Şifreyi Onayla',
+                      hintText: 'Yeni şifrenizi tekrar giriniz...',
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color(0x00000000),
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color(0x00000000),
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color(0x00000000),
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color(0x00000000),
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      filled: true,
+                      fillColor: Color(0xFFF5F5F5),
+                      contentPadding: EdgeInsetsDirectional.fromSTEB(
+                          10, 20, 10, 16),
+                      suffixIcon: InkWell(
+                        onTap: () =>
+                            setState(
+                                  () =>
+                              confirmPasswordVisibility =
+                              !confirmPasswordVisibility,
+                            ),
+                        child: Icon(
+                          confirmPasswordVisibility
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                    validator: validatePassword,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: _updatePassword,
+                  child: const Text('Şifreyi Güncelle'),
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.blue,
+                    minimumSize: const Size(130, 40),
+                    padding: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    elevation: 3,
                   ),
                 ),
               ],
             ),
           ),
-        ]));
+        ),
+      );
+    }
   }
-}

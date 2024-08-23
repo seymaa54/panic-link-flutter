@@ -7,7 +7,15 @@ class ContactProvider with ChangeNotifier {
   String _userId = '';
   List<Contact> _contacts = [];
 
-  ContactProvider(this._userId) {
+  ContactProvider(this._userId);
+
+  void updateUserId(String userId) {
+    _userId = userId;
+    // Yeni kullanıcı kimliği ile ilgili işlemleri burada yapın, örneğin:
+    loadContacts();
+  }
+
+  void loadContacts() {
     _database
         .child('users')
         .child(_userId)
@@ -44,7 +52,7 @@ class ContactProvider with ChangeNotifier {
     try {
       // Firebase'de contact düğümüne yeni contact ekleyelim
       var newContactRef =
-          _database.child('users').child(_userId).child('contacts').push();
+      _database.child('users').child(_userId).child('contacts').push();
       newContact.contactId = newContactRef
           .key!; // Firebase'den otomatik olarak oluşturulan ID'yi al
       await newContactRef

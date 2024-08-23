@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:panic_link/complete_profile.dart';
-import 'package:panic_link/login_page.dart';
+import 'package:panic_link/auth/complete_profile.dart';
+import 'package:panic_link/auth/login_page.dart';
 import 'package:panic_link/privacyPolicy.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:panic_link/verificationEmail.dart';
+import 'package:panic_link/auth/verificationEmail.dart';
 
 class RegisterAccount extends StatefulWidget {
   static const String routeName = '/registerAccount';
@@ -60,6 +60,16 @@ class _RegisterAccountState extends State<RegisterAccount> {
     }
     return null;
   }
+  String? validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Lütfen şifrenizi girin';
+    }
+    if (value.length < 6) {
+      return 'Şifreniz en az 6 veya daha fazla karakterden oluşmalıdır';
+    }
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -136,6 +146,7 @@ class _RegisterAccountState extends State<RegisterAccount> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFEEF1F5),
       body: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.max,
@@ -157,7 +168,7 @@ class _RegisterAccountState extends State<RegisterAccount> {
                     mainAxisSize: MainAxisSize.max,
                     children: [
                       Padding(
-                        padding: EdgeInsetsDirectional.fromSTEB(0, 13, 10, 20),
+                        padding: EdgeInsetsDirectional.fromSTEB(0, 13, 5, 20),
                         child: Row(
                           mainAxisSize: MainAxisSize.max,
                           mainAxisAlignment: MainAxisAlignment.start,
@@ -221,9 +232,9 @@ class _RegisterAccountState extends State<RegisterAccount> {
                                   key: _formKey,
                                   child: Column(
                                     children: [
-                                      Padding(
-                                        padding: EdgeInsetsDirectional.fromSTEB(
-                                            0, 1, 0, 0),
+                                      SizedBox(
+                                        width: 600, // Genişlik
+                                        height: 60, // Yükseklik - Dikey boyutu artırmak için bu değeri ayarlayın
                                         child: TextFormField(
                                           controller: _emailController,
                                           focusNode: emailAddressLoginFocusNode,
@@ -236,52 +247,45 @@ class _RegisterAccountState extends State<RegisterAccount> {
                                                 color: Color(0x00000000),
                                                 width: 1,
                                               ),
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
+                                              borderRadius: BorderRadius.circular(8),
                                             ),
                                             focusedBorder: OutlineInputBorder(
                                               borderSide: BorderSide(
                                                 color: Color(0x00000000),
                                                 width: 1,
                                               ),
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
+                                              borderRadius: BorderRadius.circular(8),
                                             ),
                                             errorBorder: OutlineInputBorder(
                                               borderSide: BorderSide(
                                                 color: Color(0x00000000),
                                                 width: 1,
                                               ),
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
+                                              borderRadius: BorderRadius.circular(8),
                                             ),
-                                            focusedErrorBorder:
-                                                OutlineInputBorder(
+                                            focusedErrorBorder: OutlineInputBorder(
                                               borderSide: BorderSide(
                                                 color: Color(0x00000000),
                                                 width: 1,
                                               ),
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
+                                              borderRadius: BorderRadius.circular(8),
                                             ),
                                             filled: true,
-                                            fillColor:
-                                                Theme.of(context).cardColor,
-                                            contentPadding:
-                                                EdgeInsetsDirectional.fromSTEB(
-                                                    20, 20, 20, 24),
+                                            fillColor:  Color(0xFFF5F5F5),
+                                            contentPadding: EdgeInsetsDirectional.fromSTEB(10, 20, 10, 16), // Padding'i artırarak yüksekliği artırdık
                                           ),
                                           validator: validateEmail,
                                         ),
                                       ),
-                                      Padding(
-                                        padding: EdgeInsetsDirectional.fromSTEB(
-                                            0, 9, 0, 0),
+                                  SizedBox(// Genişlik
+                                    height: 7),
+                                      SizedBox(
+                                        width: 600, // Genişlik
+                                        height: 60, // Yükseklik - Dikey boyutu artırmak için bu değeri ayarlayın
                                         child: TextFormField(
                                           controller: _passwordController,
                                           focusNode: passwordLoginFocusNode,
-                                          obscureText:
-                                              !passwordCreateVisibility,
+                                          obscureText: !passwordCreateVisibility,
                                           decoration: InputDecoration(
                                             labelText: 'Şifre',
                                             hintText: 'Şifrenizi giriniz...',
@@ -290,61 +294,53 @@ class _RegisterAccountState extends State<RegisterAccount> {
                                                 color: Color(0x00000000),
                                                 width: 1,
                                               ),
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
+                                              borderRadius: BorderRadius.circular(8),
                                             ),
                                             focusedBorder: OutlineInputBorder(
                                               borderSide: BorderSide(
                                                 color: Color(0x00000000),
                                                 width: 1,
                                               ),
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
+                                              borderRadius: BorderRadius.circular(8),
                                             ),
                                             errorBorder: OutlineInputBorder(
                                               borderSide: BorderSide(
                                                 color: Color(0x00000000),
                                                 width: 1,
                                               ),
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
+                                              borderRadius: BorderRadius.circular(8),
                                             ),
-                                            focusedErrorBorder:
-                                                OutlineInputBorder(
+                                            focusedErrorBorder: OutlineInputBorder(
                                               borderSide: BorderSide(
                                                 color: Color(0x00000000),
                                                 width: 1,
                                               ),
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
+                                              borderRadius: BorderRadius.circular(8),
                                             ),
                                             filled: true,
-                                            fillColor:
-                                                Theme.of(context).cardColor,
-                                            contentPadding:
-                                                EdgeInsetsDirectional.fromSTEB(
-                                                    20, 20, 20, 24),
+                                            fillColor: Color(0xFFF5F5F5), // Aynı arka plan rengi
+                                            contentPadding: EdgeInsetsDirectional.fromSTEB(10, 20, 10, 16), // Padding'i artırarak yüksekliği artırdık
                                             suffixIcon: InkWell(
                                               onTap: () => setState(
-                                                () => passwordCreateVisibility =
-                                                    !passwordCreateVisibility,
+                                                    () => passwordCreateVisibility = !passwordCreateVisibility,
                                               ),
-                                              focusNode: FocusNode(
-                                                  skipTraversal: true),
+                                              focusNode: FocusNode(skipTraversal: true),
                                               child: Icon(
                                                 passwordCreateVisibility
                                                     ? Icons.visibility_outlined
-                                                    : Icons
-                                                        .visibility_off_outlined,
+                                                    : Icons.visibility_off_outlined,
                                                 size: 20,
                                               ),
                                             ),
                                           ),
+                                          validator: validatePassword,
                                         ),
                                       ),
-                                      Padding(
-                                        padding: EdgeInsetsDirectional.fromSTEB(
-                                            0, 9, 0, 0),
+                                      SizedBox(// Genişlik
+                                          height: 7),
+                                      SizedBox(
+                                        width: 600, // Genişlik
+                                        height: 60, //
                                         child: TextFormField(
                                           controller:_confirmPasswordController,
                                           focusNode: confirmPasswordLoginFocusNode,
@@ -387,8 +383,7 @@ class _RegisterAccountState extends State<RegisterAccount> {
                                                   BorderRadius.circular(8),
                                             ),
                                             filled: true,
-                                            fillColor:
-                                                Theme.of(context).cardColor,
+                                            fillColor: Color(0xFFF5F5F5), // Aynı arka plan rengi
                                             contentPadding:
                                                 EdgeInsetsDirectional.fromSTEB(
                                                     20, 20, 20, 24),
@@ -412,131 +407,127 @@ class _RegisterAccountState extends State<RegisterAccount> {
                                       ),
                                     ],
                                   )),
-                              Padding(
-                                padding: EdgeInsets.only(top: 0),
-                                child: Row(
-                                  children: [
-                                    Checkbox(
-                                      value: privacyPolicyChecked,
-                                      onChanged: (value) {
-                                        setState(() {
-                                          privacyPolicyChecked = value!;
-                                        });
-                                      },
-                                    ),
-                                    GestureDetector(
-                                      onTap: () {
-                                        Navigator.pushNamed(
-                                            context, PrivacyPolicy.routeName);
-                                      },
-                                      child: Text(
-                                        'Gizlilik Sözleşmesini Okudum ve Onaylıyorum',
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.black45,
-                                        ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.start, // Tüm satırı sola hizalar
+                                children: [
+                                  Checkbox(
+                                    value: privacyPolicyChecked,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        privacyPolicyChecked = value!;
+                                      });
+                                    },
+                                  ),
+
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.pushNamed(
+                                          context, PrivacyPolicy.routeName);
+                                    },
+                                    child: Text(
+                                      'Gizlilik Sözleşmesini Okudum ve Onaylıyorum',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: Colors.black45,
                                       ),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                              Padding(
-                                padding: const EdgeInsets.only(top: 0.0),
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    if (_formKey.currentState?.validate() ??
-                                        false) {
-                                      if (privacyPolicyChecked) {
-                                        if (_passwordController.text !=
-                                            _confirmPasswordController.text) {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content:
-                                                  Text('Şifreler eşleşmiyor.'),
-                                            ),
-                                          );
-                                        } else {
-                                          //Fdssa
-                                          registerNewUser(context);
-                                        }
-                                      } else {
+                              ElevatedButton(
+                                onPressed: () {
+                                  if (_formKey.currentState?.validate() ??
+                                      false) {
+                                    if (privacyPolicyChecked) {
+                                      if (_passwordController.text !=
+                                          _confirmPasswordController.text) {
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
                                           SnackBar(
-                                            content: Text(
-                                                'Lütfen koşulları kabul edin.'),
+                                            content:
+                                                Text('Şifreler eşleşmiyor.'),
                                           ),
                                         );
+                                      } else {
+                                        //Fdssa
+                                        registerNewUser(context);
                                       }
+                                    } else {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                              'Lütfen koşulları kabul edin.'),
+                                        ),
+                                      );
                                     }
-                                  },
-                                  child: Text(
-                                    'Hesap Oluştur',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    foregroundColor: Colors.white,
-                                    backgroundColor: Colors.blue,
-                                    minimumSize: const Size(140, 40),
-                                    padding: EdgeInsets.zero,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(30),
-                                    ),
-                                    elevation: 3,
+                                  }
+                                },
+                                child: Text(
+                                  'Hesap Oluştur',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
+                                style: ElevatedButton.styleFrom(
+                                  foregroundColor: Colors.white,
+                                  backgroundColor: Colors.blue,
+                                  minimumSize: const Size(128, 40),
+                                  padding: EdgeInsets.zero,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                  elevation: 3,
+                                ),
                               ),
-                              Padding(
-                                padding:
-                                    EdgeInsetsDirectional.fromSTEB(60, 1, 0, 0),
+                              Container(
+                                width: 300, // Genişliği sınırladık
+                                height: 30,
                                 child: Row(
                                   children: [
-                                    InkWell(
-                                      onTap: () async {
-                                        Navigator.pushNamed(
-                                            context, LoginPage.routeName);
-                                      },
-                                      child: Container(
-                                        height: 20,
-                                        decoration: BoxDecoration(
-                                          color: Color(0xFFF5F5F5),
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 10, top: 0.0),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Text(
-                                                'Giriş',
-                                                style: TextStyle(
-                                                  color: Colors.blue,
-                                                  fontFamily: 'Lexend',
+                                    Expanded(
+                                      child: InkWell(
+                                        onTap: () async {
+                                          Navigator.pushNamed(context, LoginPage.routeName);
+                                        },
+                                        child: Container(
+                                          height: 45,
+                                          decoration: BoxDecoration(
+                                            color: Color(0xFFF5F5F5),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(left: 5, top: 0.0),
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Text(
+                                                  'Giriş',
+                                                  style: TextStyle(
+                                                    color: Colors.blue,
+                                                    fontFamily: 'Lexend',
+                                                  ),
                                                 ),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 5.0, right: 8),
-                                                child: Icon(
-                                                  Icons.arrow_back,
-                                                  color: Color(0xFF1A1F24),
-                                                  size: 24,
+                                                Padding(
+                                                  padding: const EdgeInsets.only(left: 5.0, right: 8),
+                                                  child: Icon(
+                                                    Icons.arrow_back,
+                                                    color: Color(0xFF1A1F24),
+                                                    size: 24,
+                                                  ),
                                                 ),
-                                              ),
-                                              Text(
-                                                'Zaten hesabınız mı var?',
-                                                style: TextStyle(
-                                                  fontFamily: 'Lexend',
+                                                Flexible(
+                                                  child: Text(
+                                                    'Zaten hesabınız mı var?',
+                                                    style: TextStyle(
+                                                      fontFamily: 'Lexend',
+                                                    ),
+                                                    overflow: TextOverflow.ellipsis, // Yazı uzun olursa kısaltılır
+                                                  ),
                                                 ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),

@@ -4,10 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
-import 'package:panic_link/login_page.dart';
-import 'package:panic_link/main.dart';
+import 'package:panic_link/home_page.dart';
+import 'package:panic_link/auth/login_page.dart';
 import 'package:panic_link/otp_phone.dart';
-import 'package:panic_link/scan_device.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_database/firebase_database.dart';
 
@@ -81,6 +80,7 @@ class _CompleteProfileState extends State<CompleteProfile> {
     try {
       String? downloadUrl;
 
+      // Eğer bir resim dosyası seçildiyse bu dosyayı Firebase Storage'a yükle
       if (_imageFile != null) {
         final String fileName =
             '${widget.userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
@@ -90,12 +90,19 @@ class _CompleteProfileState extends State<CompleteProfile> {
             .child(fileName);
 
         final uploadTask = storageReference.putFile(File(_imageFile!.path));
+
+        // Yükleme işlemini bekle ve sonuç snapshot'ı al
         final snapshot = await uploadTask.whenComplete(() => null);
+
+        // Resim URL'sini al
         downloadUrl = await snapshot.ref.getDownloadURL();
       }
 
+      // Kullanıcı referansını belirle
       DatabaseReference userRef =
-          FirebaseDatabase.instance.ref().child('users').child(widget.userId);
+      FirebaseDatabase.instance.ref().child('users').child(widget.userId);
+
+      // Kullanıcı verilerini bir haritaya aktar
       Map<String, dynamic> userData = {
         'userId': widget.userId,
         'email': FirebaseAuth.instance.currentUser!.email,
@@ -105,28 +112,34 @@ class _CompleteProfileState extends State<CompleteProfile> {
         'phone': _telNumberController.text.trim(),
         'profileImageUrl': downloadUrl ?? '',
         'contacts': '',
-        'deviceId': '',
+        'device': '',
         'helpCalls': '',
       };
 
+      // Eğer bir resim URL'si varsa, bu URL'yi haritaya ekleyin
       if (downloadUrl != null) {
         userData['profileImageUrl'] = downloadUrl;
       }
 
+      // Veritabanına kullanıcı verilerini güncelle
       await userRef.update(userData);
 
+      // Başarılı bir işlem mesajı göster
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Kullanıcı başarıyla oluşturuldu."),
         ),
       );
 
+      // Kullanıcıyı Ana Sayfaya yönlendir
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => HomePage()),
-        (Route<dynamic> route) => false,
+        MaterialPageRoute(builder: (context) => HomePageAlt()),
+            (Route<dynamic> route) => false,
       );
+
     } catch (e) {
+      // Hata mesajı göster
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Kullanıcı oluşturma başarısız."),
@@ -136,10 +149,15 @@ class _CompleteProfileState extends State<CompleteProfile> {
   }
 
   Future<void> _verifyPhoneNumber() async {
+    print(_telNumberController.text.toString());
     try {
       await FirebaseAuth.instance.verifyPhoneNumber(
         phoneNumber: _telNumberController.text.trim(),
-        verificationCompleted: (phoneAuthCredential) {},
+        verificationCompleted: (phoneAuthCredential) async {
+          await FirebaseAuth.instance.signInWithCredential(phoneAuthCredential);
+          print(phoneAuthCredential);
+          print('dopurkma tamamalnıd');
+        },
         verificationFailed: (error) {
           log(error.toString());
           ScaffoldMessenger.of(context).showSnackBar(
@@ -149,6 +167,8 @@ class _CompleteProfileState extends State<CompleteProfile> {
           );
         },
         codeSent: (verificationId, forceResendingToken) {
+          print('kod gönderildi');
+
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -173,6 +193,7 @@ class _CompleteProfileState extends State<CompleteProfile> {
   }
 
   Widget build(BuildContext context) {
+    backgroundColor: Color(0xFFEEF1F5);
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -321,7 +342,7 @@ class _CompleteProfileState extends State<CompleteProfile> {
                     onPressed: () {
                       if (_formKey.currentState?.validate() ?? false) {
                         // Form geçerli, işlemleri yapabilirsiniz
-                        _verifyPhoneNumber();
+                        _updateProfile();
                       }
                     },
                     child: Text('Gönder'),

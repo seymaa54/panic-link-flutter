@@ -2,9 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:provider/provider.dart';
-import 'forgot_password.dart';
+import '../forgot_password.dart';
 import 'register_account.dart';
-import 'home_page_alt.dart';
+import '../home_page.dart';
 import 'package:panic_link/provider/user_provider.dart'; // UserProvider sınıfını içeri aktarın
 
 
@@ -116,7 +116,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     UserProvider _userProvider = Provider.of<UserProvider>(context, listen: false);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Color(0xFFEEF1F5),
       body: SingleChildScrollView(
         child: Container(
           width: MediaQuery.of(context).size.width,
@@ -124,7 +124,7 @@ class _LoginPageState extends State<LoginPage> {
           decoration: BoxDecoration(
             image: DecorationImage(
               fit: BoxFit.cover,
-              image: AssetImage('assets/images/createAccount_bg@2x.png'),
+              image: AssetImage('assets/images/login_bg@2x.png'),
             ),
           ),
           child: Column(
@@ -153,6 +153,18 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               Padding(
+                padding: EdgeInsets.fromLTRB(24, 13, 28, 0),
+                child: Text(
+                  'Merhaba',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 25,
+                    fontFamily: 'Lexend',
+                  ),
+                ),
+              ),
+
+              Padding(
                 padding: EdgeInsets.fromLTRB(24, 0, 24, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,8 +184,9 @@ class _LoginPageState extends State<LoginPage> {
                       key: _formKey,
                       child: Column(
                         children: [
-                          Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
+                          SizedBox(
+                            width: 600, // Genişlik
+                           height: 60, // Yükseklik - Dikey boyutu artırmak için bu değeri ayarlayın
                             child: TextFormField(
                               controller: _emailController,
                               focusNode: emailAddressLoginFocusNode,
@@ -210,15 +223,16 @@ class _LoginPageState extends State<LoginPage> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 filled: true,
-                                fillColor: Theme.of(context).cardColor,
-                                contentPadding: EdgeInsetsDirectional.fromSTEB(
-                                    20, 24, 20, 24),
+                                fillColor:  Color(0xFFF5F5F5),
+                                contentPadding: EdgeInsetsDirectional.fromSTEB(10, 20, 10, 16), // Padding'i artırarak yüksekliği artırdık
                               ),
                               validator: validateEmail,
                             ),
                           ),
-                          Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(0, 9, 0, 0),
+                          SizedBox(height: 11,),
+                          SizedBox(
+                            width: 600, // Genişlik
+                            height: 60, // Yükseklik - Dikey boyutu artırmak için bu değeri ayarlayın
                             child: TextFormField(
                               controller: _passwordController,
                               focusNode: passwordLoginFocusNode,
@@ -255,13 +269,11 @@ class _LoginPageState extends State<LoginPage> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 filled: true,
-                                fillColor: Theme.of(context).cardColor,
-                                contentPadding: EdgeInsetsDirectional.fromSTEB(
-                                    20, 24, 20, 24),
+                                fillColor: Color(0xFFF5F5F5), // Aynı arka plan rengi
+                                contentPadding: EdgeInsetsDirectional.fromSTEB(10, 20, 10, 16), // Padding'i artırarak yüksekliği artırdık
                                 suffixIcon: InkWell(
                                   onTap: () => setState(
-                                        () => passwordCreateVisibility =
-                                    !passwordCreateVisibility,
+                                        () => passwordCreateVisibility = !passwordCreateVisibility,
                                   ),
                                   focusNode: FocusNode(skipTraversal: true),
                                   child: Icon(
@@ -275,11 +287,13 @@ class _LoginPageState extends State<LoginPage> {
                               validator: validatePassword,
                             ),
                           ),
+                          SizedBox(height: 11,),
+
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Padding(
-                                padding: const EdgeInsets.only(left: 4.0),
+                                padding: const EdgeInsets.only(left: 0.0),
                                 child: TextButton(
                                   onPressed: () {
                                     Navigator.pushNamed(
@@ -305,12 +319,13 @@ class _LoginPageState extends State<LoginPage> {
                                   'Giriş',
                                   style: TextStyle(
                                     fontFamily: 'Lexend',
+                                    fontSize:19,
                                   ),
                                 ),
                                 style: ElevatedButton.styleFrom(
                                   foregroundColor: Colors.white,
                                   backgroundColor: Colors.blue,
-                                  minimumSize: const Size(120, 50),
+                                  minimumSize: const Size(110, 40),
                                   padding: EdgeInsets.zero,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30),
@@ -321,20 +336,20 @@ class _LoginPageState extends State<LoginPage> {
                             ],
                           ),
                           Padding(
-                            padding: const EdgeInsets.only(top: 18.0),
+                            padding: const EdgeInsets.only(top: 13.0),
                             child: InkWell(
                               onTap: () async {
                                 Navigator.pushNamed(
                                     context, RegisterAccount.routeName);
                               },
                               child: Container(
-                                height: 56,
+                                height: 40,
                                 decoration: BoxDecoration(
                                   color: Color(0xFFF5F5F5),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(top: 3.0),
+                                  padding: const EdgeInsets.only(top: 1.0),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [

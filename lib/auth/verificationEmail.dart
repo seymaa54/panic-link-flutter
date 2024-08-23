@@ -21,7 +21,7 @@ class _VerificationEmailState extends State<VerificationEmail> {
   void initState() {
     super.initState();
     _auth.sendEmailVerificationLink();
-    timer = Timer.periodic(Duration(seconds: 5), (timer) {
+    timer = Timer.periodic(Duration(seconds: 3), (timer) {
       FirebaseAuth.instance.currentUser?.reload();
       if (FirebaseAuth.instance.currentUser!.emailVerified == true) {
         timer.cancel();
@@ -37,6 +37,8 @@ class _VerificationEmailState extends State<VerificationEmail> {
 
   @override
   Widget build(BuildContext context) {
+    backgroundColor: Color(0xFFEEF1F5); // Hex kodunu burada kullanıyoruz
+
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16.0),
