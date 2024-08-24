@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -154,20 +153,79 @@ class DeviceProvider with ChangeNotifier {
 
 
   // Pin kodunu günceller
-  Future<void> updatePinCode(String newPinCode) async {
-    if (_device != null) {
-      try {
-        Device updatedDevice = _device!.copyWith(pinCode: newPinCode);
-        await _deviceRef.child('device').update(updatedDevice.toMap()); // Veriyi Firebase'e güncelle
-        _device = updatedDevice; // Güncellenmiş cihaz bilgisini sakla
-        notifyListeners(); // Dinleyicilere bildir
-        print('Cihaz pin kodu başarıyla güncellendi: $newPinCode');
-      } catch (error) {
-        print('Firebase\'e pin kodu güncelleme hatası: $error');
+  Future<void> fetchDevice(String deviceId) async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) {
+        print('Kullanıcı ID\'si bulunamadı.');
+        return;
       }
+
+      DatabaseReference deviceRef = FirebaseDatabase.instance
+          .reference()
+          .child('users')
+          .child(userId)
+          .child('device')
+          .child(deviceId);
+
+      DatabaseEvent event = await deviceRef.once();
+
+      if (event.snapshot.exists) {
+        Map<String, dynamic> data = Map<String, dynamic>.from(event.snapshot.value as Map);
+        _device = Device.fromMap(data);
+        notifyListeners();
+        print('Cihaz bilgileri başarıyla alındı: ${_device?.toMap()}');
+      } else {
+        print('Cihaz bulunamadı.');
+      }
+    } catch (e) {
+      print('Cihaz bilgileri alınırken bir hata oluştu: $e');
     }
   }
 
+  Future<void> changePinCode(String deviceId, String currentPinCode, String newPinCode) async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) {
+        print('Kullanıcı ID\'si bulunamadı.');
+        return;
+      }
+
+      DatabaseReference deviceRef = FirebaseDatabase.instance
+          .reference()
+          .child('users')
+          .child(userId)
+          .child('device')
+          .child(deviceId);
+
+      // Mevcut PIN kodunu al
+      DatabaseEvent event = await deviceRef.once();
+      final deviceData = event.snapshot.value as Map<dynamic, dynamic>?;
+
+      if (deviceData == null) {
+        print('Cihaz bilgisi bulunamadı.');
+        return;
+      }
+
+      final existingPinCode = deviceData['pinCode'] as String?;
+
+      if (existingPinCode != currentPinCode) {
+        print('Mevcut PIN kodu yanlış.');
+        return;
+      }
+
+      // Yeni PIN kodunu güncelle
+      await deviceRef.update({'pinCode': newPinCode});
+
+      if (_device != null) {
+        _device = _device!.copyWith(pinCode: newPinCode);
+        notifyListeners();
+        print('PIN kodu başarıyla güncellendi: $newPinCode');
+      }
+    } catch (e) {
+      print('PIN kodu güncellenirken bir hata oluştu: $e');
+    }
+  }
   // Cihazın bilgilerini ekrana yazdırır
   void viewDeviceInfo() {
     if (_device != null) {

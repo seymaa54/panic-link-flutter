@@ -1,11 +1,9 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:panic_link/contact_form.dart';
 import 'package:panic_link/device_status.dart';
 import 'package:panic_link/my_contacts.dart';
 import 'package:panic_link/my_profile_page.dart';
@@ -36,17 +34,15 @@ class HomePageAlt extends StatefulWidget {
 class _HomePageAltState extends State<HomePageAlt>
     with TickerProviderStateMixin {
   /*
-  ettiniz. final FirebaseAuth _auth = FirebaseAuth.instance; ifadesi,
+   final FirebaseAuth _auth = FirebaseAuth.instance; ifadesi,
    Firebase Authentication servisini kullanarak uygulamada oturum açmış
     olan kullanıcı bilgilerini yönetmek için gereklidir. Bu ifade,
-    Firebase'in auth paketinden FirebaseAuth sınıfını kullanarak, oturum açma, kayıt olma, oturumu kapatma gibi kimlik doğrulama işlemlerini yönetmek için Firebase ile bağlantı sağlar.
+    Firebase'in auth paketinden FirebaseAuth sınıfını kullanarak, oturum açma, kayıt olma,
+    oturumu kapatma gibi kimlik doğrulama işlemlerini yönetmek için Firebase ile bağlantı sağlar.
    */
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final DatabaseReference _database = FirebaseDatabase.instance.reference();
 
   late User? _currentUser;
-  List<Contact> _contacts = []; // List to hold contacts
-// Kullanıcının contacts listesi
   late Timer _timer;
   bool _showDialog = false;
   bool _buttonPressed = false;
@@ -54,14 +50,13 @@ class _HomePageAltState extends State<HomePageAlt>
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
-  // Kullanıcı bilgilerini tutacak değişkenler
   File? _selectedImage;
   int _selectedIndex = 1;
 
   bool _isAlertShown2 =
-      false; // Alert dialogunun açık olup olmadığını kontrol etmek için bir değişken
+      false; // Alert dialogunun açık olup olmadığını kontrol etmek için değişken
   bool _isPinPromptShown =
-      false; // Alert penceresinin gösterilip gösterilmediğini kontrol eden bir değişken
+      false; // Alert penceresinin gösterilip gösterilmediğini kontrol eden değişken
 
   late VoidCallback _bluetoothListener; // Listener callback referansı
 
@@ -85,7 +80,9 @@ class _HomePageAltState extends State<HomePageAlt>
 
     // Cihazın bağlı olup olmadığını kontrol et
     if (bluetoothService?.isConnected == true) {
-      print('Cihaz bağlı, DeviceProvider oluşturuluyor.');
+      if (kDebugMode) {
+        print('Cihaz bağlı, DeviceProvider oluşturuluyor.');
+      }
 
       // Kullanıcı ID'sini güncelle
       deviceProvider!.updateUserId(_currentUser!.uid);
@@ -98,31 +95,20 @@ class _HomePageAltState extends State<HomePageAlt>
     }
   }
 
-  @override
-  void dispose() {
-    // Listener'ı kaldır
-    bluetoothService?.removeListener(_checkAndSaveDevice);
-    //   bluetoothService?.removeListener(_bluetoothListener);
-    super.dispose();
-  }
-
-  Future<void> _requestSmsPermission() async {
-    var status = await Permission.sms.status;
-    if (!status.isGranted) {
-      await Permission.sms.request();
-    }
-  }
-
-
   void _checkAndSaveDevice() async {
     if (bluetoothService!.isConnected) {
-
       // Debug için değerleri kontrol et
-      print('Device: ${deviceProvider!.device}');
-      print('Is PIN Prompt Shown: $_isPinPromptShown');
+      if (kDebugMode) {
+        print('Device: ${deviceProvider!.device}');
+      }
+      if (kDebugMode) {
+        print('Is PIN Prompt Shown: $_isPinPromptShown');
+      }
 
       if (_currentUser == null) {
-        print('Kullanıcı bilgisi bulunamadı.');
+        if (kDebugMode) {
+          print('Kullanıcı bilgisi bulunamadı.');
+        }
         return;
       }
 
@@ -150,7 +136,7 @@ class _HomePageAltState extends State<HomePageAlt>
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Cihaz bilgileri kaydedildi.')),
+                const SnackBar(content: Text('Cihaz bilgileri kaydedildi.')),
               );
             }
           });
@@ -160,8 +146,25 @@ class _HomePageAltState extends State<HomePageAlt>
         }
       } else {
         // Cihaz varsa veya PIN kodu penceresi zaten gösterildiyse
-        print('Cihaz zaten mevcut veya PIN kodu penceresi zaten gösterildi.');
+        if (kDebugMode) {
+          print('Cihaz zaten mevcut veya PIN kodu penceresi zaten gösterildi.');
+        }
       }
+    }
+  }
+
+  @override
+  void dispose() {
+    // Listener'ı kaldır
+    bluetoothService?.removeListener(_checkAndSaveDevice);
+    //   bluetoothService?.removeListener(_bluetoothListener);
+    super.dispose();
+  }
+
+  Future<void> _requestSmsPermission() async {
+    var status = await Permission.sms.status;
+    if (!status.isGranted) {
+      await Permission.sms.request();
     }
   }
 
@@ -175,7 +178,9 @@ class _HomePageAltState extends State<HomePageAlt>
     const duration = Duration(minutes: 1);
     _timer = Timer(duration, () {
       if (_isAlertShown2) {
-        print('Süre bitti');
+        if (kDebugMode) {
+          print('Süre bitti');
+        }
         // Dialog açıkken yardım çağrısı yap
         _helpRequestCall();
         Navigator.of(context).pop(); // AlertDialog'u kapat
@@ -197,18 +202,19 @@ class _HomePageAltState extends State<HomePageAlt>
         // Dışarı tıklamayla kapatmayı devre dışı bırak
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text('Yardım Çağrısı'),
-            content: Text(
+            title: const Text('Yardım Çağrısı'),
+            content: const Text(
                 'Yardım çağrısı göndermek üzeresiniz. İptal etmezseniz 2 dakika içinde yardım çağrısı gönderilecektir.'),
             actions: <Widget>[
               TextButton(
-                child: Text('İptal'),
+                child: const Text('İptal'),
                 onPressed: () {
-                  _showPinCodeDialog(context); // PIN kodu doğrulama dialogunu göster
+                  _showPinCodeDialog(
+                      context); // PIN kodu doğrulama dialogunu göster
                 },
               ),
               TextButton(
-                child: Text('Devam Et'),
+                child: const Text('Devam Et'),
                 onPressed: () {
                   _timer.cancel();
                   _helpRequestCall(); // Yardım çağrısını burada gönder
@@ -228,13 +234,13 @@ class _HomePageAltState extends State<HomePageAlt>
     String enteredPinCode = '';
 
     // DeviceProvider'ı context üzerinden alalım
-   // final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
+    // final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('PIN Kodu Doğrulama'),
+          title: const Text('PIN Kodu Doğrulama'),
           content: TextField(
             onChanged: (value) {
               enteredPinCode = value;
@@ -242,19 +248,19 @@ class _HomePageAltState extends State<HomePageAlt>
             obscureText: true,
             // Girişin gizli olmasını sağlar (PIN için uygun)
             keyboardType: TextInputType.number,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'PIN Kodunu Girin',
             ),
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('İptal'),
+              child: const Text('İptal'),
               onPressed: () {
                 Navigator.of(context).pop(); // PIN dialogunu kapat
               },
             ),
             TextButton(
-              child: Text('Onayla'),
+              child: const Text('Onayla'),
               onPressed: () {
                 if (deviceProvider!.device?.pinCode == enteredPinCode) {
                   // PIN kodu doğruysa
@@ -271,14 +277,14 @@ class _HomePageAltState extends State<HomePageAlt>
 
                   // Yardım çağrısı iptal edildi mesajı göster
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
+                    const SnackBar(
                       content: Text('Yardım çağrısı iptal edildi.'),
                     ),
                   );
                 } else {
                   // PIN kodu yanlışsa
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
+                    const SnackBar(
                       content: Text(
                           'Yanlış PIN kodu. Yardım çağrısını iptal edemediniz.'),
                     ),
@@ -293,7 +299,9 @@ class _HomePageAltState extends State<HomePageAlt>
   }
 
   Future<void> _helpRequestCall() async {
-    print('helprequestCall metodu çağrıldı');
+    if (kDebugMode) {
+      print('helprequestCall metodu çağrıldı');
+    }
     Provider.of<HelpRequestProvider>(context, listen: false)
         .sendHelpRequest(context);
     setState(() {
@@ -336,9 +344,9 @@ class _HomePageAltState extends State<HomePageAlt>
 
   @override
   Widget build(BuildContext context) {
-    ScreenUtil.init(context, designSize: Size(375, 812), minTextAdapt: true);
+    ScreenUtil.init(context, designSize: const Size(375, 812), minTextAdapt: true);
     backgroundColor:
-    Color(0xFFEEF1F5);
+    const Color(0xFFEEF1F5);
     return Scaffold(
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -369,7 +377,7 @@ class _HomePageAltState extends State<HomePageAlt>
         },
       ),
       key: scaffoldKey,
-      backgroundColor: Color(0xFFEEF1F5), // Hex kodunu burada kullanıyoruz
+      backgroundColor: const Color(0xFFEEF1F5), // Hex kodunu burada kullanıyoruz
       body: Container(
         child: SafeArea(
           top: true,
@@ -422,11 +430,10 @@ class _HomePageAltState extends State<HomePageAlt>
                                                       // Yükseklik ekran boyutuna göre ayarlandı
                                                       clipBehavior:
                                                           Clip.antiAlias,
-                                                      decoration: BoxDecoration(
+                                                      decoration: const BoxDecoration(
                                                         shape: BoxShape.circle,
                                                       ),
-                                                      child: userData != null &&
-                                                              userData.profileImageUrl !=
+                                                      child: userData.profileImageUrl !=
                                                                   null
                                                           ? Image.network(
                                                               userData
@@ -470,7 +477,7 @@ class _HomePageAltState extends State<HomePageAlt>
                                                               fontSize: 18.sp,
                                                             ),
                                                             children: [
-                                                              TextSpan(
+                                                              const TextSpan(
                                                                 text:
                                                                     'Merhaba, ',
                                                               ),
@@ -481,7 +488,7 @@ class _HomePageAltState extends State<HomePageAlt>
                                                                         .name
                                                                     : '',
                                                                 style:
-                                                                    TextStyle(
+                                                                    const TextStyle(
                                                                   color: Colors
                                                                       .blue, // Kullanıcının adını mavi yapıyoruz
                                                                 ),
@@ -531,15 +538,15 @@ class _HomePageAltState extends State<HomePageAlt>
                                             decoration: BoxDecoration(
                                               color: Colors.white54,
                                               boxShadow: [
-                                                BoxShadow(
+                                                const BoxShadow(
                                                   blurRadius: 4,
                                                   color: Color(0x34000000),
                                                   offset: Offset(0.0, -2),
                                                 )
                                               ],
                                               borderRadius: BorderRadius.only(
-                                                bottomLeft: Radius.circular(0),
-                                                bottomRight: Radius.circular(0),
+                                                bottomLeft: const Radius.circular(0),
+                                                bottomRight: const Radius.circular(0),
                                                 topLeft: Radius.circular(16.r),
                                                 // Border radius ekran boyutuna göre ayarlandı
                                                 topRight: Radius.circular(16
@@ -832,7 +839,7 @@ class _HomePageAltState extends State<HomePageAlt>
 
                                                     if (isHelpMessageReceived) {
                                                       // Eğer yardım mesajı alındıysa, alert dialogu göster
-                                                      WidgetsBinding.instance!
+                                                      WidgetsBinding.instance
                                                           .addPostFrameCallback(
                                                               (_) {
                                                         _showAlert(context);
@@ -840,7 +847,7 @@ class _HomePageAltState extends State<HomePageAlt>
                                                     }
                                                     if (isConnected) {
                                                       // Sadece bu kısımda DeviceProvider'a ihtiyacınız var
-                                                      WidgetsBinding.instance!
+                                                      WidgetsBinding.instance
                                                           .addPostFrameCallback(
                                                               (_) {
                                                         // Consumer'ı burada kullanıyoruz
@@ -850,7 +857,7 @@ class _HomePageAltState extends State<HomePageAlt>
                                                               deviceProvider,
                                                               child) {
                                                             _checkAndSaveDevice();
-                                                            return SizedBox(); // Bu Consumer'ın kendi return widget'ı, boyutsuz bir widget kullanıyoruz
+                                                            return const SizedBox(); // Bu Consumer'ın kendi return widget'ı, boyutsuz bir widget kullanıyoruz
                                                           },
                                                         );
                                                       });
@@ -915,7 +922,7 @@ class _HomePageAltState extends State<HomePageAlt>
                                                                               MainAxisAlignment.center,
                                                                           children: [
                                                                             Padding(
-                                                                              padding: EdgeInsets.only(right: 208, bottom: 20),
+                                                                              padding: const EdgeInsets.only(right: 208, bottom: 20),
                                                                               // Padding ayarlarını düzenleyin
                                                                               child: Card(
                                                                                 color: isConnected ? Colors.green : Colors.red,
@@ -941,7 +948,7 @@ class _HomePageAltState extends State<HomePageAlt>
                                                                                   },
                                                                                   style: ElevatedButton.styleFrom(
                                                                                     backgroundColor: isHelpMessageReceived ? Colors.red : Colors.blue,
-                                                                                    shape: CircleBorder(),
+                                                                                    shape: const CircleBorder(),
                                                                                     padding: EdgeInsets.all(80.w),
                                                                                   ),
                                                                                   child: Icon(
@@ -980,7 +987,7 @@ class _HomePageAltState extends State<HomePageAlt>
                         },
                       ),
                     )
-                  : Center(
+                  : const Center(
                       child:
                           CircularProgressIndicator()); // Veriler yükleniyorsa, bir yükleme göstergesi göster
             },
@@ -989,109 +996,4 @@ class _HomePageAltState extends State<HomePageAlt>
       ),
     );
   }
-
-//userprovidera almak istiyorum//
-/*bunu kaldırabiliriz.çünkü userprovider da zaten kulnaıcı bilgileri
-  alınıyor. buradaki firstname ksımları lazm ve load contacts metpsu
-  kullanıcı bilgilieri helprequest sayfasında yine userproviderdan alabilirim
-  loadv-contacts meetodunu da çağırabilirim yine
-   */
-/*void _getCurrentUser() {
-    _currentUser = _auth.currentUser; // _currentUser'ı burada atıyoruz
-    if (_currentUser != null) {
-      _database
-          .child('users')
-          .child(_currentUser!.uid)
-          .get()
-          .then((DataSnapshot dataSnapshot) {
-        dynamic data = dataSnapshot.value;
-        if (data != null) {
-          setState(() {
-            _firstName = data['name'];
-            _lastName = data['surname'];
-            _email = data['email'];
-            _phone = data['phone'];
-          });
-          print(_firstName);
-          print(_lastName);
-
-          print(_email);
-          print(_phone);
-        }
-      }).catchError((error) {
-        print('Kullanıcı bilgileri alınırken hata oluştu: $error');
-      });
-
-      _loadContacts();
-    } else {
-      print('Kullanıcı null');
-    }
-  }
-*/
-//contact providera gitsin
-/* void _loadContacts() {
-    // Önce var olan dinleyiciyi kaldıralım
-    _database
-        .child('users')
-        .child(_currentUser!.uid)
-        .child('contacts')
-        .get()
-        .then((DataSnapshot dataSnapshot) {
-      dynamic data = dataSnapshot.value;
-
-      print('Contacts Data: $data'); // Veriyi debug etmek için ekleyin
-
-      if (data != null && data.isNotEmpty) {
-        setState(() {
-          _contacts = (data as Map).values.map((contactData) {
-            print('Contact Data: $contactData'); // Debug için ekleyin
-            return Contact.fromMap(Map<String, dynamic>.from(contactData));
-          }).toList();
-        });
-
-        // Eğer kişi listesi boşsa alert dialogu kaldıralım
-        _isAlertShown = false;
-      } else {
-        setState(() {
-          _contacts = [];
-        });
-
-        // Eğer kişi listesi boş ise ve alert daha önce gösterilmediyse showDialog çağır
-        if (!_isAlertShown) {
-          _isAlertShown = true; // Alert gösterildiğini işaretle
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: Text('Kişi Listesi Boş'),
-                content: Text('Kişi eklemek için devam etmek istiyor musunuz?'),
-                actions: <Widget>[
-                  TextButton(
-                    child: Text('İptal'),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      _isAlertShown = false; // Alert kapatıldı, bayrağı sıfırla
-                    },
-                  ),
-                  TextButton(
-                    child: Text('Devam Et'),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      Navigator.pushNamed(context, ContactForm.routeName);
-                      _isAlertShown = false; // Alert kapatıldı, bayrağı sıfırla
-                    },
-                  ),
-                ],
-              );
-            },
-          );
-        }
-      }
-
-      print(
-          'LOAD Parsed Contacts: $_contacts'); // Kontakların işlenmiş halini debug için ekleyin
-    }, onError: (error) {
-      print('Veriler alınırken hata oluştu: $error');
-    });
-  }*/
 }
