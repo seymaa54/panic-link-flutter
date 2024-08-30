@@ -67,44 +67,51 @@ class _HomePageAltState extends State<HomePageAlt>
   void initState() {
     super.initState();
     _requestSmsPermission();
-    bluetoothService =
-        Provider.of<BluetoothServiceProvider>(context, listen: false);
+
+    // BluetoothServiceProvider ve DeviceProvider'ı alın
+    bluetoothService = Provider.of<BluetoothServiceProvider>(context, listen: false);
+    deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
+
     _currentUser = _auth.currentUser;
 
     // Bluetooth'u başlat
     bluetoothService!.initBluetooth();
 
     // Cihazın bağlı olup olmadığını kontrol et
-    // DeviceProvider'ı alın
-    deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
-
-    // Cihazın bağlı olup olmadığını kontrol et
-    if (bluetoothService?.isConnected == true) {
+  /*  if (bluetoothService?.isConnected == true) {
       if (kDebugMode) {
-        print('Cihaz bağlı, DeviceProvider oluşturuluyor.');
+        print('Cihaz bağlı, DeviceProvider işlemleri başlatılıyor.');
       }
 
-      // Kullanıcı ID'sini güncelle
+      // Kullanıcı ID'sini güncelle ve cihazı kontrol et
       deviceProvider!.updateUserId(_currentUser!.uid);
-
-      // PIN kodu gerekli mi kontrol et
       _checkAndSaveDevice();
     } else {
-      // Cihaz bağlı değilse, dinleyici ekle
-      bluetoothService!.addListener(_checkAndSaveDevice);
+      // Cihaz bağlı değilse, bağlantı için dinleyici ekle
+      bluetoothService!.addListener(_onDeviceConnected);
+    }*/
+  }
+
+// Cihaz bağlandığında çağrılacak metod
+  void _onDeviceConnected() {
+    if (bluetoothService!.isConnected) {
+      if (kDebugMode) {
+        print('Cihaz bağlandı, gerekli işlemler yapılıyor.');
+      }
+
+      // Dinlemeyi durdur
+      bluetoothService!.removeListener(_onDeviceConnected);
+
+      // Kullanıcı ID'sini güncelle ve cihazı kontrol et
+      deviceProvider!.updateUserId(_currentUser!.uid);
+      _checkAndSaveDevice();
     }
   }
 
   void _checkAndSaveDevice() async {
+    // Cihazın bağlı olup olmadığını bir daha kontrol et
     if (bluetoothService!.isConnected) {
-      // Debug için değerleri kontrol et
-      if (kDebugMode) {
-        print('Device: ${deviceProvider!.device}');
-      }
-      if (kDebugMode) {
-        print('Is PIN Prompt Shown: $_isPinPromptShown');
-      }
-
+      // Kullanıcı bilgisi kontrolü
       if (_currentUser == null) {
         if (kDebugMode) {
           print('Kullanıcı bilgisi bulunamadı.');
@@ -115,7 +122,7 @@ class _HomePageAltState extends State<HomePageAlt>
       // Kullanıcı ID'sini güncelle
       deviceProvider!.updateUserId(_currentUser!.uid);
 
-      // Cihaz mevcut değilse ve PIN kodu penceresi henüz gösterilmediyse
+      // Cihaz ve PIN kodu penceresi durumu kontrolü
       if (deviceProvider!.device == null && !_isPinPromptShown) {
         _isPinPromptShown = true;
 
@@ -140,12 +147,8 @@ class _HomePageAltState extends State<HomePageAlt>
               );
             }
           });
-
-          // Dinlemeyi durdur
-          bluetoothService!.removeListener(_checkAndSaveDevice);
         }
       } else {
-        // Cihaz varsa veya PIN kodu penceresi zaten gösterildiyse
         if (kDebugMode) {
           print('Cihaz zaten mevcut veya PIN kodu penceresi zaten gösterildi.');
         }
@@ -156,10 +159,10 @@ class _HomePageAltState extends State<HomePageAlt>
   @override
   void dispose() {
     // Listener'ı kaldır
-    bluetoothService?.removeListener(_checkAndSaveDevice);
-    //   bluetoothService?.removeListener(_bluetoothListener);
+    bluetoothService?.removeListener(_onDeviceConnected);
     super.dispose();
   }
+
 
   Future<void> _requestSmsPermission() async {
     var status = await Permission.sms.status;

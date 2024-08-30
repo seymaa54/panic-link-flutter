@@ -13,7 +13,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../model/user_model.dart';
-import 'contact_provider.dart'; // Contact modelinizi buraya göre düzenleyin
+import 'contact_provider.dart';
 
 class HelpRequestProvider with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;

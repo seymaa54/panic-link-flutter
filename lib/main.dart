@@ -95,8 +95,9 @@ ScreenUtilInit: Alınan ekran boyutlarını designSize olarak kullanır ve uygul
                           Provider.of<BluetoothServiceProvider>(context, listen: false),
                         );
                       },
-                    ),                  ],
+                    ),              ],
                   child: MaterialApp(
+                    debugShowCheckedModeBanner: false, // Debug banner'ı kaldır
                     initialRoute: '/',
                     routes: {
                       '/': (context) => LoginPage(),

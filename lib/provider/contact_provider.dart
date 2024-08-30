@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:panic_link/model/contact_model.dart'; // Contact modelinizi buraya göre düzenleyin
+import 'package:panic_link/model/contact_model.dart';
 
 class ContactProvider with ChangeNotifier {
   DatabaseReference _database = FirebaseDatabase.instance.reference();

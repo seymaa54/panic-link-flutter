@@ -256,7 +256,7 @@ class DeviceProvider with ChangeNotifier {
     String? pinCode;
     await showDialog<String>(
       context: context,
-      barrierDismissible: false, // Alert dışında bir yere tıklanarak kapatılmasını önler
+      barrierDismissible: false,
       builder: (context) {
         TextEditingController pinController = TextEditingController();
         return AlertDialog(
@@ -285,12 +285,12 @@ class DeviceProvider with ChangeNotifier {
               onPressed: () {
                 if (pinController.text.isNotEmpty) {
                   pinCode = pinController.text;
-                  Navigator.of(context).pop(pinCode); // PIN kodunu döndür
+                  Navigator.of(context).pop(pinCode);
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                        content: Text(
-                            'Lütfen geçerli bir PIN kodu girin.')),
+                      content: Text('Lütfen geçerli bir PIN kodu girin.'),
+                    ),
                   );
                 }
               },
@@ -299,7 +299,9 @@ class DeviceProvider with ChangeNotifier {
           ],
         );
       },
-    );
+    ).then((value) {
+      print("Dialog closed with value: $value"); // Debug için
+    });
     return pinCode;
   }
   @override

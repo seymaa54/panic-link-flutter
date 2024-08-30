@@ -1,5 +1,5 @@
 class Device {
-  String? deviceId;  // Bu alan, Firebase tarafından otomatik olarak verilen ID'yi tutar
+  String? deviceId;
   String? deviceName;
   bool isConnected;
   String? pinCode;
